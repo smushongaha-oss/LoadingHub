@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0d0f0e"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="description" content="LoadingHub — Book trucks, vans and rides. Find fuel stations. Calculate trip costs in USD."/>
+<title>LoadingHub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<style>
+:root{
+  --bg:#0d0f0e;--surface:#141714;--card:#1a1e1a;--border:#252b25;
+  --accent:#c8f53a;--accent2:#f5a623;--accent3:#3af5c8;
+  --text:#e8ede8;--muted:#6b7a6b;--danger:#f5453a;
+  --truck:#c8f53a;--car:#3af5c8;--passenger:#f5a623;--fuel:#ff6b35;
+  --toll:#9b59b6;--tolll:rgba(155,89,182,0.12);
+  --client:#3af5c8;--driver:#c8f53a;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',Arial,sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ── LOGIN / ROLE SELECT ── */
+#role-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;}
+.role-box{width:100%;max-width:420px;}
+.role-logo{font-family:'Bebas Neue',Impact,sans-serif;font-size:52px;color:var(--accent);letter-spacing:4px;text-align:center;margin-bottom:4px;}
+.role-tagline{text-align:center;color:var(--muted);font-size:14px;margin-bottom:36px;}
+.role-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+.role-card{background:var(--card);border:2px solid var(--border);border-radius:18px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;}
+.role-card:hover,.role-card:active{transform:translateY(-3px);}
+.role-card.client-card:hover,.role-card.client-card.selected{border-color:var(--client);background:rgba(58,245,200,.06);}
+.role-card.driver-card:hover,.role-card.driver-card.selected{border-color:var(--driver);background:rgba(200,245,58,.06);}
+.role-emoji{font-size:42px;margin-bottom:12px;}
+.role-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:4px;}
+.role-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.role-client .role-name{color:var(--client);}
+.role-driver .role-name{color:var(--driver);}
+
+/* ── SIDEBAR (desktop) ── */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:72px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:20px 0;z-index:100;gap:5px;}
+.logo{font-family:'Bebas Neue',Impact,sans-serif;font-size:21px;color:var(--accent);letter-spacing:2px;writing-mode:vertical-rl;transform:rotate(180deg);margin-bottom:18px;margin-top:6px;}
+.nav-btn{width:48px;height:48px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .2s;position:relative;-webkit-appearance:none;}
+.nav-btn:hover{background:var(--card);color:var(--text);}
+.nav-btn.active{background:var(--accent);color:#000;}
+.nav-btn .tip{position:absolute;left:58px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:12px;padding:4px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;}
+.nav-btn:hover .tip{opacity:1;}
+.sidebar-bottom{margin-top:auto;}
+.main{margin-left:72px;min-height:100vh;}
+.bottom-nav{display:none;}
+
+/* ── MOBILE ── */
+@media(max-width:600px){
+  .sidebar{display:none !important;}
+  .main{margin-left:0;padding-bottom:70px;}
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:200;height:60px;align-items:stretch;padding-bottom:env(safe-area-inset-bottom,0);}
+  .bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:none;background:transparent;color:var(--muted);gap:2px;cursor:pointer;padding:6px 2px;transition:color .15s;font-family:'DM Sans',Arial,sans-serif;-webkit-appearance:none;}
+  .bn-btn .bn-icon{font-size:20px;line-height:1;}
+  .bn-btn .bn-label{font-size:9px;white-space:nowrap;}
+  .bn-btn.active{color:var(--accent);}
+  .mobile-topbar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:99;}
+  .mobile-logo{font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;color:var(--accent);letter-spacing:2px;}
+  .mobile-role-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
+  .view{padding:14px 12px;}
+  .page-title{font-size:32px;}
+  .hero-strip{padding:18px;}
+  .hero-strip h1{font-size:36px;}
+  .fare-amount{font-size:50px;}
+  .fare-breakdown{grid-template-columns:1fr 1fr;}
+  .mode-cards{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .modal{padding:20px 16px;border-radius:20px 20px 0 0;margin:0;}
+}
+.mobile-topbar{display:none;}
+
+/* ── VIEWS ── */
+.view{display:none;padding:26px 30px;animation:fadeIn .3s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── TYPOGRAPHY ── */
+.page-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:50px;line-height:1;letter-spacing:2px;margin-bottom:4px;}
+.page-title span{color:var(--accent);}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:26px;}
+
+/* ── CARDS / GRID ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media(max-width:900px){.grid-4{grid-template-columns:1fr 1fr;}.grid-3{grid-template-columns:1fr 1fr;}}
+
+/* ── STATS ── */
+.stat{display:flex;flex-direction:column;gap:4px;}
+.stat-value{font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:var(--accent);line-height:1;}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;}
+.badge-truck{background:rgba(200,245,58,.12);color:var(--truck);border:1px solid rgba(200,245,58,.25);}
+.badge-car{background:rgba(58,245,200,.12);color:var(--car);border:1px solid rgba(58,245,200,.25);}
+.badge-passenger{background:rgba(245,166,35,.12);color:var(--passenger);border:1px solid rgba(245,166,35,.25);}
+.badge-active{background:rgba(200,245,58,.12);color:var(--accent);}
+.badge-pending{background:rgba(245,166,35,.12);color:var(--accent2);}
+.badge-done{background:rgba(100,100,100,.15);color:var(--muted);}
+.badge-toll{background:var(--tolll);color:var(--toll);border:1px solid rgba(155,89,182,.3);}
+.badge-negotiating{background:rgba(245,166,35,.15);color:var(--accent2);animation:pulse-badge 1.5s infinite;}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:none;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;min-height:44px;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#d4ff4a;}
+.btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-ghost{background:transparent;color:var(--muted);}
+.btn-ghost:hover{color:var(--text);}
+.btn-negotiate{background:linear-gradient(135deg,rgba(245,166,35,.2),rgba(245,166,35,.05));color:var(--accent2);border:1px solid rgba(245,166,35,.4);}
+.btn-negotiate:hover{background:rgba(245,166,35,.25);border-color:var(--accent2);}
+.btn-toll{background:var(--tolll);color:var(--toll);border:1px solid rgba(155,89,182,.3);}
+.btn-danger{background:rgba(245,69,58,.12);color:var(--danger);border:1px solid rgba(245,69,58,.25);}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:8px;min-height:36px;}
+.btn-full{width:100%;justify-content:center;}
+
+/* ── FORMS ── */
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:500;}
+input,select,textarea{background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',Arial,sans-serif;font-size:16px;padding:10px 14px;outline:none;transition:border-color .2s;width:100%;min-height:44px;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7a6b' fill='none' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-color:var(--bg);padding-right:36px;}
+select option{background:var(--card);}
+textarea{resize:vertical;min-height:76px;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;letter-spacing:1px;color:var(--muted);}
+.divider{height:1px;background:var(--border);margin:18px 0;}
+
+/* ── HERO ── */
+.hero-strip{background:linear-gradient(135deg,rgba(200,245,58,.06),transparent);border:1px solid rgba(200,245,58,.1);border-radius:20px;padding:32px;margin-bottom:22px;position:relative;overflow:hidden;}
+.hero-strip::after{content:'🚛';position:absolute;right:30px;top:50%;transform:translateY(-50%);font-size:72px;opacity:.1;}
+.hero-strip h1{font-family:'Bebas Neue',Impact,sans-serif;font-size:46px;line-height:1;letter-spacing:2px;}
+.hero-strip h1 span{color:var(--accent);}
+.hero-strip p{color:var(--muted);margin:8px 0 18px;font-size:14px;max-width:400px;}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* CLIENT HERO */
+.hero-client{background:linear-gradient(135deg,rgba(58,245,200,.06),transparent);border-color:rgba(58,245,200,.15);}
+.hero-client::after{content:'📦';}
+/* DRIVER HERO */
+.hero-driver{background:linear-gradient(135deg,rgba(200,245,58,.06),transparent);border-color:rgba(200,245,58,.15);}
+.hero-driver::after{content:'🚛';}
+
+/* ── ROLE INDICATOR BAR ── */
+.role-bar{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:20px;}
+.role-bar-icon{font-size:24px;}
+.role-bar-info{flex:1;}
+.role-bar-name{font-weight:700;font-size:14px;}
+.role-bar-type{font-size:12px;color:var(--muted);}
+.role-bar-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;}
+.role-bar-badge.client{background:rgba(58,245,200,.15);color:var(--client);}
+.role-bar-badge.driver{background:rgba(200,245,58,.15);color:var(--driver);}
+.role-switch-btn{font-size:12px;color:var(--muted);cursor:pointer;background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-family:inherit;white-space:nowrap;}
+.role-switch-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── FUEL BANNER ── */
+.fuel-banner{background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(255,107,53,.03));border:1px solid rgba(255,107,53,.25);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px;}
+.fuel-price-chip{display:flex;flex-direction:column;align-items:center;background:var(--bg);border:1px solid rgba(255,107,53,.2);border-radius:10px;padding:8px 14px;}
+.fuel-price-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;color:var(--fuel);line-height:1;}
+.fuel-price-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.fuel-banner-info{flex:1;}
+.fuel-banner-title{font-weight:700;font-size:13px;margin-bottom:2px;}
+.fuel-banner-sub{font-size:11px;color:var(--muted);}
+
+/* ── TOLL BANNER ── */
+.toll-banner{background:linear-gradient(135deg,rgba(155,89,182,.1),rgba(155,89,182,.02));border:1px solid rgba(155,89,182,.25);border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px;}
+.toll-banner-title{font-weight:700;font-size:13px;margin-bottom:2px;color:var(--toll);}
+.toll-banner-sub{font-size:11px;color:var(--muted);}
+
+/* ── LOAD CARDS ── */
+.load-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:flex-start;gap:14px;transition:border-color .2s;cursor:pointer;margin-bottom:10px;}
+.load-card:hover{border-color:var(--accent);}
+.load-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.load-icon.truck{background:rgba(200,245,58,.1);}
+.load-icon.car{background:rgba(58,245,200,.1);}
+.load-icon.passenger{background:rgba(245,166,35,.1);}
+.load-info{flex:1;min-width:0;}
+.load-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+.load-route{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.load-route span{color:var(--text);font-weight:500;}
+.load-meta{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+.load-price-col{text-align:right;flex-shrink:0;}
+.load-price{font-family:'Bebas Neue',Impact,sans-serif;font-size:24px;color:var(--accent);}
+.load-price small{display:block;font-family:'DM Sans',sans-serif;font-size:10px;color:var(--muted);font-weight:400;text-transform:uppercase;}
+.load-toll{font-size:10px;color:var(--toll);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+
+/* ── NEGOTIATE SECTION ON LOAD ── */
+.negotiate-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+/* ── DRIVER CARDS ── */
+.driver-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .2s;}
+.driver-card:hover{border-color:var(--muted);transform:translateY(-2px);}
+.driver-header{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;}
+.driver-avatar-wrap{position:relative;flex-shrink:0;}
+.driver-avatar{width:62px;height:62px;border-radius:50%;background:var(--bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;}
+.driver-avatar img{width:100%;height:100%;object-fit:cover;}
+.driver-online-dot{position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--card);}
+.driver-name{font-weight:700;font-size:14px;margin-bottom:2px;}
+.driver-type-lbl{font-size:11px;color:var(--muted);margin-bottom:5px;}
+.stars{color:var(--accent2);font-size:12px;margin-bottom:4px;}
+.driver-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.driver-stat{background:var(--bg);border-radius:8px;padding:7px 10px;}
+.driver-stat-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--accent);}
+.driver-stat-lbl{font-size:10px;color:var(--muted);}
+
+/* ── PHOTO GALLERY (driver services) ── */
+.photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0;}
+.photo-thumb{aspect-ratio:1;border-radius:8px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;cursor:pointer;position:relative;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.photo-thumb .photo-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);font-size:9px;color:var(--text);padding:3px 5px;text-align:center;}
+.photo-upload-btn{aspect-ratio:1;border-radius:8px;background:var(--bg);border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;cursor:pointer;gap:4px;transition:border-color .2s;}
+.photo-upload-btn:hover{border-color:var(--accent);}
+.photo-upload-btn span{font-size:11px;color:var(--muted);}
+
+/* ── SERVICE PHOTOS SECTION ── */
+.service-photos-section{margin-top:12px;}
+.service-photos-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+
+/* ── TOLLGATE TABLE ── */
+.toll-table{width:100%;border-collapse:collapse;}
+.toll-table th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;border-bottom:1px solid var(--border);}
+.toll-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(37,43,37,.5);}
+.toll-table tr:last-child td{border-bottom:none;}
+.toll-table tr:hover td{background:rgba(155,89,182,.03);}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
+.text-toll{color:var(--toll);}
+.text-accent{color:var(--accent);}
+.text-fuel{color:var(--fuel);}
+.toll-route-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--tolll);color:var(--toll);font-weight:600;}
+
+/* ── FARE CALC ── */
+.fare-display{background:linear-gradient(135deg,rgba(200,245,58,.08),rgba(200,245,58,.02));border:1px solid rgba(200,245,58,.2);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;}
+.fare-amount{font-family:'Bebas Neue',Impact,sans-serif;font-size:62px;color:var(--accent);line-height:1;}
+.fare-currency{font-size:24px;vertical-align:super;}
+.fare-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;}
+.fare-item{background:var(--bg);border-radius:10px;padding:11px;}
+.fare-item-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text);}
+.fare-item-lbl{font-size:10px;color:var(--muted);margin-top:2px;text-transform:uppercase;}
+.toll-fare-item{border:1px solid rgba(155,89,182,.25);}
+.toll-fare-item .fare-item-val{color:var(--toll);}
+
+/* ── FUEL COST TABLE ── */
+.fuel-cost-table{width:100%;border-collapse:collapse;}
+.fuel-cost-table th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;border-bottom:1px solid var(--border);}
+.fuel-cost-table td{padding:9px 12px;font-size:13px;border-bottom:1px solid rgba(37,43,37,.5);}
+.fuel-cost-table tr:last-child td{border-bottom:none;}
+.fuel-cost-table tr:hover td{background:rgba(200,245,58,.03);}
+
+/* ── TRACKING ── */
+.tracker-steps{position:relative;padding-left:30px;}
+.tracker-line{position:absolute;left:9px;top:12px;bottom:12px;width:2px;background:var(--border);}
+.tracker-step{position:relative;margin-bottom:22px;}
+.tracker-step::before{content:'';position:absolute;left:-25px;top:4px;width:11px;height:11px;border-radius:50%;border:2px solid var(--border);background:var(--bg);}
+.tracker-step.done::before{background:var(--accent);border-color:var(--accent);}
+.tracker-step.active::before{background:var(--accent2);border-color:var(--accent2);box-shadow:0 0 0 3px rgba(245,166,35,.2);}
+.tracker-step.toll-step::before{background:var(--toll);border-color:var(--toll);}
+.tracker-step-title{font-weight:600;font-size:13px;margin-bottom:2px;}
+.tracker-step-desc{font-size:12px;color:var(--muted);}
+.tracker-step-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-top:2px;}
+
+/* ── PAYMENT ── */
+.payment-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;}
+.payment-card:hover{border-color:var(--accent);}
+.payment-card.selected{border-color:var(--accent);background:rgba(200,245,58,.04);}
+.payment-check{color:var(--accent);font-size:16px;}
+
+/* ── NEGOTIATION MODAL ── */
+.offer-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;}
+.offer-input{flex:1;}
+.counter-list{margin-top:10px;}
+.counter-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.counter-from{font-size:12px;color:var(--muted);}
+.counter-amount{font-family:'Bebas Neue',Impact,sans-serif;font-size:24px;}
+.counter-amount.mine{color:var(--accent2);}
+.counter-amount.theirs{color:var(--accent);}
+.counter-actions{margin-left:auto;display:flex;gap:6px;}
+
+/* ── MAP ── */
+.zim-map-wrapper{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px;position:relative;overflow:hidden;}
+.zim-map-container{position:relative;width:100%;margin:0 auto;}
+.zim-map-container svg{width:100%;height:auto;display:block;}
+.city-dot{cursor:pointer;}
+.city-dot:hover circle{r:9 !important;}
+.fuel-pin,.toll-pin{cursor:pointer;transition:transform .15s;transform-origin:center;}
+.fuel-pin:hover,.toll-pin:hover{transform:scale(1.4);}
+.map-info-panel{position:absolute;top:10px;right:10px;background:rgba(13,15,14,.93);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:11px;min-width:148px;}
+.map-info-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;margin-bottom:7px;color:var(--accent);}
+.legend-row{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.city-tooltip,.fuel-tooltip,.toll-tooltip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:12px;z-index:50;display:none;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.city-tooltip.show,.fuel-tooltip.show,.toll-tooltip.show{display:block;}
+.ct-city,.ft-name,.tt-name{font-weight:700;margin-bottom:4px;}
+.ft-name{color:var(--fuel);}
+.tt-name{color:var(--toll);}
+.ct-row,.ft-row,.tt-row{display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px;}
+.ct-label,.ft-label,.tt-label{color:var(--muted);}
+.ct-val{font-family:'JetBrains Mono',monospace;color:var(--accent);}
+.toll-tooltip{border-color:rgba(155,89,182,.3);}
+.fuel-tooltip{border-color:rgba(255,107,53,.3);}
+.map-controls{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.map-toggle{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--muted);font-family:'DM Sans',Arial,sans-serif;font-size:12px;cursor:pointer;transition:all .2s;}
+.map-toggle.on-fuel{background:rgba(255,107,53,.12);border-color:var(--fuel);color:var(--fuel);}
+.map-toggle.on-city{background:rgba(200,245,58,.1);border-color:var(--accent);color:var(--accent);}
+.map-toggle.on-road{background:rgba(58,245,200,.1);border-color:var(--car);color:var(--car);}
+.map-toggle.on-toll{background:var(--tolll);border-color:var(--toll);color:var(--toll);}
+
+/* ── PROFILE SCREENS ── */
+.profile-header{background:linear-gradient(135deg,rgba(200,245,58,.06),rgba(58,245,200,.03));border:1px solid var(--border);border-radius:20px;padding:24px;display:flex;align-items:center;gap:18px;margin-bottom:20px;flex-wrap:wrap;}
+.profile-big-avatar{width:80px;height:80px;border-radius:50%;background:var(--bg);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:38px;flex-shrink:0;overflow:hidden;}
+.profile-big-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-big-avatar.client-av{border-color:var(--client);}
+.profile-big-avatar.driver-av{border-color:var(--driver);}
+
+/* ── ACTIVITY ── */
+.activity-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.activity-icon{font-size:18px;width:36px;height:36px;background:var(--bg);border-radius:9px;display:flex;align-items:center;justify-content:center;}
+.activity-info{flex:1;}
+.activity-title{font-weight:600;font-size:13px;}
+.activity-date{font-size:11px;color:var(--muted);margin-top:1px;}
+.activity-amount{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;}
+.activity-amount.positive{color:var(--accent);}
+.activity-amount.negative{color:var(--danger);}
+
+/* ── TAB GROUP ── */
+.tab-group{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:12px;margin-bottom:18px;}
+.tab-btn{flex:1;padding:8px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;min-height:40px;}
+.tab-btn.active{background:var(--card);color:var(--text);}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:520px;animation:slideUp .25s ease;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+@media(min-width:601px){.modal-overlay{align-items:center;}.modal{border-radius:20px;margin:16px;max-height:90vh;}@keyframes slideUp{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:24px;margin-bottom:16px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.mode-card{border-radius:12px;padding:12px 8px;border:2px solid var(--border);cursor:pointer;text-align:center;transition:all .2s;background:var(--bg);}
+.mode-card.selected.truck-mode{border-color:var(--truck);background:rgba(200,245,58,.06);}
+.mode-card.selected.car-mode{border-color:var(--car);background:rgba(58,245,200,.06);}
+.mode-card.selected.pax-mode{border-color:var(--passenger);background:rgba(245,166,35,.06);}
+.mode-emoji{font-size:24px;margin-bottom:6px;}
+.mode-title{font-weight:700;font-size:12px;margin-bottom:2px;}
+.mode-desc{font-size:10px;color:var(--muted);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;right:14px;background:var(--card);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;font-size:13px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;display:flex;align-items:center;gap:10px;max-width:290px;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.toast.show{transform:translateY(0);opacity:1;}
+@media(min-width:601px){.toast{bottom:24px;right:22px;}}
+
+/* ── SUGGESTION CARDS ── */
+.suggestion-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all .2s;}
+.suggestion-card:hover{border-color:var(--accent2);transform:translateY(-2px);}
+.suggestion-icon{font-size:28px;margin-bottom:9px;}
+.suggestion-title{font-weight:700;font-size:14px;margin-bottom:5px;}
+.suggestion-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.suggestion-tag{display:inline-block;margin-top:9px;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+.tag-soon{background:rgba(245,166,35,.15);color:var(--accent2);}
+.tag-mvp{background:rgba(200,245,58,.12);color:var(--accent);}
+.tag-future{background:rgba(58,245,200,.12);color:var(--car);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     ROLE SELECT SCREEN
+════════════════════════════════════════ -->
+<div id="role-screen">
+  <div class="role-box">
+    <div class="role-logo">LOADINGHUB</div>
+    <div class="role-tagline">🇿🇼 Zimbabwe's Transport Platform · Select your role to continue</div>
+    <div class="role-cards">
+      <div class="role-card client-card role-client" onclick="selectRole('client')">
+        <div class="role-emoji">📦</div>
+        <div class="role-name">I'm a Client</div>
+        <div class="role-desc">I need to ship goods or book a ride</div>
+      </div>
+      <div class="role-card driver-card role-driver" onclick="selectRole('driver')">
+        <div class="role-emoji">🚛</div>
+        <div class="role-name">I'm a Driver</div>
+        <div class="role-desc">I transport goods and passengers</div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Already have an account?</div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn btn-secondary btn-sm" onclick="selectRole('client')">Client Login</button>
+        <button class="btn btn-primary btn-sm" onclick="selectRole('driver')">Driver Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE TOP BAR -->
+<div class="mobile-topbar" id="mobile-topbar">
+  <div>
+    <div class="mobile-logo">LOADINGHUB</div>
+    <div style="font-size:10px;color:var(--muted);" id="mobile-role-label">Client Dashboard</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span id="mobile-role-badge" class="badge badge-car" style="font-size:10px;">CLIENT</span>
+    <button class="btn btn-primary btn-sm" onclick="openModal('postLoad')" style="min-height:34px;padding:6px 12px;">+ Post</button>
+  </div>
+</div>
+
+<!-- DESKTOP SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="logo">LM</div>
+  <button class="nav-btn active" onclick="nav('home')" id="nav-home">🏠<span class="tip">Dashboard</span></button>
+  <button class="nav-btn" onclick="nav('map')" id="nav-map">🗺️<span class="tip">Zimbabwe Map</span></button>
+  <button class="nav-btn" onclick="nav('loads')" id="nav-loads">📦<span class="tip">Loads</span></button>
+  <button class="nav-btn" onclick="nav('tracking')" id="nav-tracking">📍<span class="tip">Tracking</span></button>
+  <button class="nav-btn" onclick="nav('fare')" id="nav-fare">⛽<span class="tip">Fare + Fuel</span></button>
+  <button class="nav-btn" onclick="nav('drivers')" id="nav-drivers">🚗<span class="tip">Drivers</span></button>
+  <button class="nav-btn" onclick="nav('tollgates')" id="nav-tollgates">🛂<span class="tip">Tollgates</span></button>
+  <button class="nav-btn" onclick="nav('suggest')" id="nav-suggest">💡<span class="tip">Features</span></button>
+  <div class="sidebar-bottom">
+    <button class="nav-btn" onclick="nav('profile')" id="nav-profile">👤<span class="tip">Profile</span></button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ═══════ HOME (switches by role) ═══════ -->
+<div class="view active" id="view-home">
+
+  <!-- CLIENT DASHBOARD -->
+  <div id="dash-client">
+    <div class="hero-strip hero-client">
+      <h1>WELCOME BACK <span>TINASHE</span></h1>
+      <p>Ship goods, book rides, track deliveries — all from here.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="openModal('postLoad')">📦 Post a Load</button>
+        <button class="btn btn-secondary" onclick="nav('fare')">⛽ Fare + Toll Calculator</button>
+        <button class="btn btn-secondary" onclick="openModal('bookRide')">🚗 Book a Ride</button>
+      </div>
+    </div>
+    <div class="fuel-banner">
+      <span style="font-size:22px;">⛽</span>
+      <div class="fuel-price-chip"><div class="fuel-price-val">$1.71</div><div class="fuel-price-lbl">Petrol/L</div></div>
+      <div class="fuel-price-chip"><div class="fuel-price-val">$1.77</div><div class="fuel-price-lbl">Diesel/L</div></div>
+      <div class="fuel-banner-info">
+        <div class="fuel-banner-title">🇿🇼 ZERA Prices — 4 March 2026</div>
+        <div class="fuel-banner-sub">Government-cushioned · Updated fortnightly · Included in fare estimates</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="nav('fare')">Calculate →</button>
+    </div>
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="card stat"><div class="stat-value">34</div><div class="stat-label">Loads Posted</div></div>
+      <div class="card stat"><div class="stat-value">12</div><div class="stat-label">Rides Booked</div></div>
+      <div class="card stat"><div class="stat-value">2</div><div class="stat-label">Active Trips</div></div>
+      <div class="card stat"><div class="stat-value">4.7★</div><div class="stat-label">My Rating</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-header"><div class="section-title">My Active Loads</div><button class="btn btn-ghost btn-sm" onclick="nav('loads')">View all →</button></div>
+        <div class="load-card" style="cursor:default;">
+          <div class="load-icon truck">🚛</div>
+          <div class="load-info">
+            <div class="load-title">Cement Bags — 3 Tonnes</div>
+            <div class="load-route">Harare <span>→</span> Bulawayo</div>
+            <div class="load-meta"><span class="badge badge-truck">Truck</span><span class="badge badge-active">In Transit</span><span class="badge badge-toll">🛂 2 Tolls</span></div>
+            <div class="load-toll">Toll charges: $6.00 included</div>
+          </div>
+          <div class="load-price-col"><div class="load-price">$286<small>USD</small></div></div>
+        </div>
+        <div class="load-card" style="cursor:default;">
+          <div class="load-icon car">🚐</div>
+          <div class="load-info">
+            <div class="load-title">Electronics — 500kg</div>
+            <div class="load-route">Mutare <span>→</span> Harare</div>
+            <div class="load-meta"><span class="badge badge-car">Small Car</span><span class="badge badge-negotiating">💬 Negotiating</span></div>
+          </div>
+          <div class="load-price-col"><div class="load-price">$95<small>USD</small></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-header"><div class="section-title">Quick Actions</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button class="btn btn-secondary btn-full" onclick="openModal('postLoad')" style="flex-direction:column;height:72px;gap:4px;"><span style="font-size:20px;">📦</span>Post Load</button>
+          <button class="btn btn-secondary btn-full" onclick="nav('map')" style="flex-direction:column;height:72px;gap:4px;"><span style="font-size:20px;">🗺️</span>Fuel Map</button>
+          <button class="btn btn-secondary btn-full" onclick="nav('tollgates')" style="flex-direction:column;height:72px;gap:4px;"><span style="font-size:20px;">🛂</span>Tollgates</button>
+          <button class="btn btn-secondary btn-full" onclick="nav('tracking')" style="flex-direction:column;height:72px;gap:4px;"><span style="font-size:20px;">📍</span>Track Trip</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER DASHBOARD -->
+  <div id="dash-driver" style="display:none;">
+    <div class="hero-strip hero-driver">
+      <h1>GOOD MORNING <span>JAMES</span></h1>
+      <p>Browse loads, manage your bids, track earnings and toll costs.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="nav('loads')">📦 Browse Loads</button>
+        <button class="btn btn-secondary" onclick="nav('fare')">⛽ Fuel + Toll Calc</button>
+        <button class="btn btn-secondary" onclick="nav('profile')">🚛 My Profile</button>
+      </div>
+    </div>
+    <div class="fuel-banner">
+      <span style="font-size:22px;">⛽</span>
+      <div class="fuel-price-chip"><div class="fuel-price-val">$1.71</div><div class="fuel-price-lbl">Petrol/L</div></div>
+      <div class="fuel-price-chip"><div class="fuel-price-val">$1.77</div><div class="fuel-price-lbl">Diesel/L</div></div>
+      <div class="fuel-banner-info">
+        <div class="fuel-banner-title">🇿🇼 ZERA Prices — 4 March 2026</div>
+        <div class="fuel-banner-sub">Fuel costs auto-calculated in every fare estimate</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="nav('tollgates')">🛂 Tollgates →</button>
+    </div>
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="card stat"><div class="stat-value">312</div><div class="stat-label">Total Trips</div></div>
+      <div class="card stat"><div class="stat-value">$1,840</div><div class="stat-label">This Month</div></div>
+      <div class="card stat"><div class="stat-value">4.9★</div><div class="stat-label">My Rating</div></div>
+      <div class="card stat"><div class="stat-value" style="color:var(--toll);">$48</div><div class="stat-label">Tolls This Month</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-header"><div class="section-title">Available Loads Near Me</div><button class="btn btn-ghost btn-sm" onclick="nav('loads')">Browse all →</button></div>
+        <div class="load-card">
+          <div class="load-icon truck">🚛</div>
+          <div class="load-info">
+            <div class="load-title">Maize Grain — 8 Tonnes</div>
+            <div class="load-route">Gweru <span>→</span> Harare</div>
+            <div class="load-meta"><span class="badge badge-truck">Truck</span><span class="badge badge-pending">Open</span><span class="badge badge-toll">🛂 1 Toll $3</span></div>
+            <div class="negotiate-row">
+              <button class="btn btn-primary btn-sm" onclick="showToast('📩 Bid sent!','📩')">Bid $340</button>
+              <button class="btn btn-negotiate btn-sm" onclick="openModal('negotiate')">💬 Negotiate</button>
+            </div>
+          </div>
+          <div class="load-price-col"><div class="load-price">$340<small>ASKING</small></div></div>
+        </div>
+        <div class="load-card">
+          <div class="load-icon passenger">🧑‍💼</div>
+          <div class="load-info">
+            <div class="load-title">Kombi Ride — 4 Seats</div>
+            <div class="load-route">Masvingo <span>→</span> Harare</div>
+            <div class="load-meta"><span class="badge badge-passenger">Passenger</span><span class="badge badge-pending">Open</span><span class="badge badge-toll">🛂 2 Tolls $5</span></div>
+            <div class="negotiate-row">
+              <button class="btn btn-primary btn-sm" onclick="showToast('📩 Bid sent!','📩')">Bid $45</button>
+              <button class="btn btn-negotiate btn-sm" onclick="openModal('negotiate')">💬 Negotiate</button>
+            </div>
+          </div>
+          <div class="load-price-col"><div class="load-price">$45<small>ASKING</small></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-header"><div class="section-title">Earnings This Week</div></div>
+        <div class="activity-item"><div class="activity-icon">🚛</div><div class="activity-info"><div class="activity-title">Cement — Harare to Byo</div><div class="activity-date">Today · Toll paid: $6</div></div><div class="activity-amount positive">+$280</div></div>
+        <div class="activity-item"><div class="activity-icon">🧑‍💼</div><div class="activity-info"><div class="activity-title">Passengers — CBD to Airport</div><div class="activity-date">Yesterday · No toll</div></div><div class="activity-amount positive">+$18</div></div>
+        <div class="activity-item"><div class="activity-icon">⛽</div><div class="activity-info"><div class="activity-title">Fuel Harare (TotalEnergies)</div><div class="activity-date">Yesterday · 80 litres diesel</div></div><div class="activity-amount negative">-$141.60</div></div>
+        <div class="activity-item"><div class="activity-icon">🛂</div><div class="activity-info"><div class="activity-title">Tollgate — Battlefields</div><div class="activity-date">Harare–Bulawayo A1</div></div><div class="activity-amount negative">-$3.00</div></div>
+        <div style="margin-top:14px;background:rgba(200,245,58,.05);border:1px solid rgba(200,245,58,.15);border-radius:10px;padding:12px;display:flex;justify-content:space-between;">
+          <div style="font-size:12px;color:var(--muted);">Net This Week</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:600;color:var(--accent);">+$412.40</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ZIMBABWE MAP ═══════ -->
+<div class="view" id="view-map">
+  <div class="page-title">ZIMBABWE <span>MAP</span></div>
+  <div class="page-sub">Cities, fuel stations &amp; tollgates — click any pin for details</div>
+  <div class="map-controls">
+    <button class="map-toggle on-fuel" id="tog-fuel" onclick="toggleLayer('fuel')">⛽ Fuel</button>
+    <button class="map-toggle on-city" id="tog-cities" onclick="toggleLayer('cities')">🏙️ Cities</button>
+    <button class="map-toggle on-road" id="tog-roads" onclick="toggleLayer('roads')">🛣️ Roads</button>
+    <button class="map-toggle on-toll" id="tog-toll" onclick="toggleLayer('toll')">🛂 Tollgates</button>
+    <div style="margin-left:auto;font-size:11px;color:var(--muted);">Tap pins for details</div>
+  </div>
+  <div class="zim-map-wrapper">
+    <div class="zim-map-container" id="map-container">
+      <svg viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(200,245,58,0.04)" stroke-width="1"/></pattern></defs>
+        <rect width="760" height="540" fill="#0d0f0e" rx="14"/>
+        <rect width="760" height="540" fill="url(#grid)" rx="14"/>
+        <path d="M 90,105 L 115,82 L 148,68 L 182,58 L 220,50 L 258,44 L 296,40 L 334,37 L 368,35 L 402,33 L 436,31 L 470,30 L 504,33 L 536,40 L 564,52 L 588,68 L 604,88 L 614,110 L 618,134 L 615,160 L 608,188 L 597,216 L 582,244 L 564,270 L 544,294 L 522,316 L 500,336 L 480,356 L 460,375 L 438,393 L 414,410 L 388,424 L 360,434 L 330,440 L 300,442 L 270,438 L 240,428 L 212,414 L 186,396 L 162,374 L 140,350 L 120,324 L 102,296 L 87,266 L 76,236 L 69,206 L 66,176 L 68,148 L 75,125 Z" fill="rgba(200,245,58,0.04)" stroke="rgba(200,245,58,0.45)" stroke-width="2.5" stroke-linejoin="round"/>
+        <text x="340" y="255" text-anchor="middle" font-family="'Bebas Neue',Impact,sans-serif" font-size="30" fill="rgba(200,245,58,0.05)" letter-spacing="8">ZIMBABWE</text>
+        <!-- Roads -->
+        <g id="layer-roads">
+          <path d="M 340,192 L 302,228 L 258,264 L 218,290 L 192,306" stroke="rgba(200,245,58,0.3)" stroke-width="2.5" fill="none"/>
+          <path d="M 340,192 L 390,214 L 436,230 L 484,244 L 524,252" stroke="rgba(200,245,58,0.3)" stroke-width="2.5" fill="none"/>
+          <path d="M 192,306 L 202,344 L 214,382 L 224,418 L 230,450" stroke="rgba(200,245,58,0.3)" stroke-width="2.5" fill="none"/>
+          <path d="M 340,192 L 322,158 L 305,128 L 288,100" stroke="rgba(58,245,200,0.22)" stroke-width="1.8" fill="none" stroke-dasharray="5,3"/>
+          <path d="M 258,264 L 296,228 L 322,208 L 340,192" stroke="rgba(200,245,58,0.18)" stroke-width="1.5" fill="none" stroke-dasharray="5,3"/>
+          <path d="M 328,362 L 308,336 L 282,304 L 258,264" stroke="rgba(200,245,58,0.18)" stroke-width="1.5" fill="none" stroke-dasharray="5,3"/>
+          <path d="M 124,168 L 150,212 L 170,254 L 192,306" stroke="rgba(58,245,200,0.18)" stroke-width="1.5" fill="none" stroke-dasharray="5,3"/>
+        </g>
+        <!-- Cities -->
+        <g id="layer-cities">
+          <g class="city-dot" onclick="cityClick('Harare')" onmouseenter="cityHover('Harare',340,192,event)" onmouseleave="hideAllTooltips()"><circle cx="340" cy="192" r="9" fill="var(--accent)" stroke="#000" stroke-width="2.5"/><circle cx="340" cy="192" r="15" fill="rgba(200,245,58,0.08)"/><text x="352" y="188" fill="var(--accent)" font-family="'DM Sans',Arial" font-size="10" font-weight="700">Harare</text><text x="352" y="200" fill="rgba(200,245,58,0.6)" font-family="'DM Sans',Arial" font-size="7.5">★ Capital</text></g>
+          <g class="city-dot" onclick="cityClick('Bulawayo')" onmouseenter="cityHover('Bulawayo',192,306,event)" onmouseleave="hideAllTooltips()"><circle cx="192" cy="306" r="7" fill="var(--accent)" stroke="#000" stroke-width="2"/><text x="204" y="302" fill="var(--accent)" font-family="'DM Sans',Arial" font-size="10" font-weight="700">Bulawayo</text><text x="204" y="313" fill="rgba(200,245,58,0.5)" font-family="'DM Sans',Arial" font-size="7.5">2nd City</text></g>
+          <g class="city-dot" onclick="cityClick('Mutare')" onmouseenter="cityHover('Mutare',524,252,event)" onmouseleave="hideAllTooltips()"><circle cx="524" cy="252" r="5.5" fill="var(--accent)" stroke="#000" stroke-width="1.5"/><text x="533" y="250" fill="var(--text)" font-family="'DM Sans',Arial" font-size="9">Mutare</text></g>
+          <g class="city-dot" onclick="cityClick('Gweru')" onmouseenter="cityHover('Gweru',258,264,event)" onmouseleave="hideAllTooltips()"><circle cx="258" cy="264" r="5.5" fill="var(--accent)" stroke="#000" stroke-width="1.5"/><text x="267" y="261" fill="var(--text)" font-family="'DM Sans',Arial" font-size="9">Gweru</text></g>
+          <g class="city-dot" onclick="cityClick('Masvingo')" onmouseenter="cityHover('Masvingo',328,362,event)" onmouseleave="hideAllTooltips()"><circle cx="328" cy="362" r="5.5" fill="var(--accent)" stroke="#000" stroke-width="1.5"/><text x="337" y="359" fill="var(--text)" font-family="'DM Sans',Arial" font-size="9">Masvingo</text></g>
+          <g class="city-dot" onclick="cityClick('Victoria Falls')" onmouseenter="cityHover('Victoria Falls',124,168,event)" onmouseleave="hideAllTooltips()"><circle cx="124" cy="168" r="6" fill="var(--car)" stroke="#000" stroke-width="1.5"/><text x="134" y="165" fill="var(--car)" font-family="'DM Sans',Arial" font-size="9">Vic Falls</text></g>
+          <g class="city-dot" onclick="cityClick('Beitbridge')" onmouseenter="cityHover('Beitbridge',230,450,event)" onmouseleave="hideAllTooltips()"><circle cx="230" cy="450" r="6" fill="var(--accent2)" stroke="#000" stroke-width="1.5"/><text x="240" y="447" fill="var(--accent2)" font-family="'DM Sans',Arial" font-size="9">Beitbridge</text></g>
+          <g class="city-dot" onclick="cityClick('Kwekwe')" onmouseenter="cityHover('Kwekwe',284,234,event)" onmouseleave="hideAllTooltips()"><circle cx="284" cy="234" r="4.5" fill="rgba(200,245,58,0.75)" stroke="#000" stroke-width="1.5"/><text x="292" y="232" fill="var(--muted)" font-family="'DM Sans',Arial" font-size="8">Kwekwe</text></g>
+          <g class="city-dot" onclick="cityClick('Chinhoyi')" onmouseenter="cityHover('Chinhoyi',288,158,event)" onmouseleave="hideAllTooltips()"><circle cx="288" cy="158" r="4.5" fill="rgba(200,245,58,0.75)" stroke="#000" stroke-width="1.5"/><text x="296" y="156" fill="var(--muted)" font-family="'DM Sans',Arial" font-size="8">Chinhoyi</text></g>
+          <g class="city-dot" onclick="cityClick('Hwange')" onmouseenter="cityHover('Hwange',152,238,event)" onmouseleave="hideAllTooltips()"><circle cx="152" cy="238" r="4.5" fill="rgba(200,245,58,0.75)" stroke="#000" stroke-width="1.5"/><text x="160" y="236" fill="var(--muted)" font-family="'DM Sans',Arial" font-size="8">Hwange</text></g>
+        </g>
+        <!-- Fuel Stations -->
+        <g id="layer-fuel">
+          <g class="fuel-pin" onmouseenter="fuelHover('TotalEnergies — Harare CBD',330,175,event)" onmouseleave="hideAllTooltips()"><circle cx="330" cy="175" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="330" y="178" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Zuva — Harare North',316,184,event)" onmouseleave="hideAllTooltips()"><circle cx="316" cy="184" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="316" y="187" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Engen — Harare South',350,205,event)" onmouseleave="hideAllTooltips()"><circle cx="350" cy="205" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="350" y="208" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('TotalEnergies — Bulawayo',180,294,event)" onmouseleave="hideAllTooltips()"><circle cx="180" cy="294" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="180" y="297" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Puma Energy — Bulawayo',202,298,event)" onmouseleave="hideAllTooltips()"><circle cx="202" cy="298" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="202" y="301" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Zuva — Gweru A1',258,276,event)" onmouseleave="hideAllTooltips()"><circle cx="258" cy="276" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="258" y="279" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Engen — Kwekwe A1',284,246,event)" onmouseleave="hideAllTooltips()"><circle cx="284" cy="246" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="284" y="249" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('TotalEnergies — Mutare',510,250,event)" onmouseleave="hideAllTooltips()"><circle cx="510" cy="250" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="510" y="253" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Puma — Masvingo',316,360,event)" onmouseleave="hideAllTooltips()"><circle cx="316" cy="360" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="316" y="363" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Zuva — Victoria Falls',124,180,event)" onmouseleave="hideAllTooltips()"><circle cx="124" cy="180" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="124" y="183" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+          <g class="fuel-pin" onmouseenter="fuelHover('Border Fuel — Beitbridge',230,438,event)" onmouseleave="hideAllTooltips()"><circle cx="230" cy="438" r="6" fill="var(--fuel)" stroke="#000" stroke-width="1.2"/><text x="230" y="441" text-anchor="middle" font-size="7" fill="#fff">⛽</text></g>
+        </g>
+        <!-- Tollgates on map -->
+        <g id="layer-toll">
+          <!-- A1: Harare-Bulawayo tollgates -->
+          <g class="toll-pin" onmouseenter="tollHover('Harare West Toll (A1)',312,220,event)" onmouseleave="hideAllTooltips()"><rect x="305" y="213" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="312" y="222" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <g class="toll-pin" onmouseenter="tollHover('Battlefields Toll (A1)',280,244,event)" onmouseleave="hideAllTooltips()"><rect x="273" y="237" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="280" y="246" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <g class="toll-pin" onmouseenter="tollHover('Gweru North Toll (A1)',244,262,event)" onmouseleave="hideAllTooltips()"><rect x="237" y="255" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="244" y="264" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <!-- A3: Harare-Mutare tollgate -->
+          <g class="toll-pin" onmouseenter="tollHover('Harare East Toll (A3)',370,200,event)" onmouseleave="hideAllTooltips()"><rect x="363" y="193" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="370" y="202" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <g class="toll-pin" onmouseenter="tollHover('Rusape Toll (A3)',460,232,event)" onmouseleave="hideAllTooltips()"><rect x="453" y="225" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="460" y="234" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <!-- A5: Bulawayo-Beitbridge -->
+          <g class="toll-pin" onmouseenter="tollHover('Bulawayo South Toll (A5)',206,330,event)" onmouseleave="hideAllTooltips()"><rect x="199" y="323" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="206" y="332" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <g class="toll-pin" onmouseenter="tollHover('Beitbridge Approach Toll (A5)',220,412,event)" onmouseleave="hideAllTooltips()"><rect x="213" y="405" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="220" y="414" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+          <!-- Harare-Masvingo -->
+          <g class="toll-pin" onmouseenter="tollHover('Masvingo Toll (A9)',316,340,event)" onmouseleave="hideAllTooltips()"><rect x="309" y="333" width="14" height="14" rx="3" fill="var(--toll)" stroke="#000" stroke-width="1.2"/><text x="316" y="342" text-anchor="middle" font-size="8" fill="#fff" font-weight="bold">$</text></g>
+        </g>
+        <!-- Compass & scale -->
+        <g transform="translate(700,56)"><circle cx="0" cy="0" r="20" fill="var(--card)" stroke="var(--border)" stroke-width="1.5"/><text x="0" y="-7" text-anchor="middle" font-family="'Bebas Neue',Impact" font-size="11" fill="var(--accent)">N</text><line x1="0" y1="-15" x2="0" y2="5" stroke="var(--accent)" stroke-width="2"/><line x1="-15" y1="0" x2="5" y2="0" stroke="var(--muted)" stroke-width="1.2"/></g>
+        <g transform="translate(32,512)"><rect x="0" y="0" width="90" height="4" fill="rgba(200,245,58,0.2)" rx="2"/><rect x="0" y="0" width="45" height="4" fill="rgba(200,245,58,0.5)" rx="2"/><text x="0" y="-3" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="var(--muted)">0</text><text x="38" y="-3" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="var(--muted)">150km</text><text x="80" y="-3" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="var(--muted)">300km</text></g>
+      </svg>
+      <!-- Legend -->
+      <div class="map-info-panel">
+        <div class="map-info-title">LEGEND</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--accent)"></div>Major City</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--car)"></div>Tourism</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--accent2)"></div>Border Post</div>
+        <div class="legend-row"><div class="legend-dot" style="background:var(--fuel)"></div>Fuel Station</div>
+        <div class="legend-row"><div style="width:10px;height:10px;border-radius:2px;background:var(--toll);flex-shrink:0;"></div>Tollgate</div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px;">ZERA MAR 2026</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fuel);">Petrol $1.71/L</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--fuel);">Diesel $1.77/L</div>
+        </div>
+      </div>
+      <!-- Tooltips -->
+      <div class="city-tooltip" id="city-tooltip"><div class="ct-city" id="ct-name"></div><div class="ct-row"><span class="ct-label">Province</span><span class="ct-val" id="ct-province"></span></div><div class="ct-row"><span class="ct-label">From Harare</span><span class="ct-val" id="ct-dist"></span></div><div class="ct-row"><span class="ct-label">Toll fees on route</span><span class="ct-val" id="ct-toll"></span></div></div>
+      <div class="fuel-tooltip" id="fuel-tooltip"><div class="ft-name" id="ft-name"></div><div class="ft-row"><span class="ft-label">Petrol</span><span style="font-family:'JetBrains Mono',monospace;color:var(--accent2);">$1.71/L</span></div><div class="ft-row"><span class="ft-label">Diesel</span><span style="font-family:'JetBrains Mono',monospace;color:var(--fuel);">$1.77/L</span></div><div class="ft-row"><span class="ft-label">Status</span><span style="color:var(--accent);">● Open 24/7</span></div></div>
+      <div class="toll-tooltip" id="toll-tooltip"><div class="tt-name" id="tt-name"></div><div class="tt-row"><span class="tt-label">Light Vehicle</span><span style="font-family:'JetBrains Mono',monospace;color:var(--toll);" id="tt-light"></span></div><div class="tt-row"><span class="tt-label">Heavy Truck</span><span style="font-family:'JetBrains Mono',monospace;color:var(--toll);" id="tt-heavy"></span></div><div class="tt-row"><span class="tt-label">Route</span><span id="tt-route" style="color:var(--muted);font-size:11px;"></span></div></div>
+    </div>
+  </div>
+  <!-- Below map tables -->
+  <div class="grid-3" style="margin-top:16px;">
+    <div class="card"><div class="section-title" style="margin-bottom:10px;">Major Routes</div><table class="fuel-cost-table"><tr><td>Harare → Bulawayo</td><td class="mono text-accent" style="text-align:right;">440 km</td></tr><tr><td>Harare → Mutare</td><td class="mono text-accent" style="text-align:right;">263 km</td></tr><tr><td>Harare → Masvingo</td><td class="mono text-accent" style="text-align:right;">292 km</td></tr><tr><td>Bulawayo → Vic Falls</td><td class="mono text-accent" style="text-align:right;">439 km</td></tr><tr><td>Bulawayo → Beitbridge</td><td class="mono text-accent" style="text-align:right;">322 km</td></tr></table></div>
+    <div class="card"><div class="section-title" style="margin-bottom:10px;">Tollgate Fees</div><table class="fuel-cost-table"><tr><td>A1 (Harare–Byo)</td><td class="mono text-toll" style="text-align:right;">3 tolls · $9</td></tr><tr><td>A3 (Harare–Mutare)</td><td class="mono text-toll" style="text-align:right;">2 tolls · $5</td></tr><tr><td>A5 (Byo–Beitbridge)</td><td class="mono text-toll" style="text-align:right;">2 tolls · $5</td></tr><tr><td>A9 (Harare–Masvingo)</td><td class="mono text-toll" style="text-align:right;">1 toll · $3</td></tr><tr><td>Harare–Vic Falls</td><td class="mono text-toll" style="text-align:right;">4 tolls · $12</td></tr></table></div>
+    <div class="card"><div class="section-title" style="margin-bottom:10px;">Fuel Cost per Route</div><table class="fuel-cost-table"><tr><td>Harare→Byo (truck)</td><td class="mono text-fuel" style="text-align:right;">~$234</td></tr><tr><td>Harare→Byo (car)</td><td class="mono" style="text-align:right;color:var(--accent2);">~$75</td></tr><tr><td>Harare→Mutare (truck)</td><td class="mono text-fuel" style="text-align:right;">~$140</td></tr><tr><td>Harare→Mutare (car)</td><td class="mono" style="text-align:right;color:var(--accent2);">~$45</td></tr><tr><td>Byo→Beitbridge (truck)</td><td class="mono text-fuel" style="text-align:right;">~$171</td></tr></table></div>
+  </div>
+</div>
+
+<!-- ═══════ TOLLGATES SCREEN ═══════ -->
+<div class="view" id="view-tollgates">
+  <div class="page-title">ZIMBABWE <span>TOLLGATES</span></div>
+  <div class="page-sub">All toll plazas, fees by vehicle type, and how they're added to your fare</div>
+  <div class="toll-banner">
+    <span style="font-size:24px;">🛂</span>
+    <div style="flex:1;">
+      <div class="toll-banner-title">Tollgate fees are automatically included in your LoadingHub fare estimate</div>
+      <div class="toll-banner-sub">Fees set by ZINARA (Zimbabwe National Road Administration). Last updated March 2026. Paid in USD.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="section-header"><div class="section-title">All Tollgates — Zimbabwe</div></div>
+    <div style="overflow-x:auto;">
+    <table class="toll-table" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Tollgate Name</th>
+          <th>Road</th>
+          <th>Location / Route</th>
+          <th>Light Vehicle</th>
+          <th>Heavy Truck</th>
+          <th>Kombi/Bus</th>
+        </tr>
+      </thead>
+      <tbody id="toll-table-body">
+        <!-- Rendered by JS -->
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Per-route toll summary -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:14px;">Total Tolls per Route</div>
+      <div id="route-toll-list"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:14px;">How Tolls Are Charged</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.9;">
+        ● Toll fees are <span style="color:var(--text);font-weight:600;">added on top</span> of the base fare automatically<br>
+        ● The fare calculator shows a <span style="color:var(--toll);font-weight:600;">🛂 Toll Line</span> in the breakdown<br>
+        ● Fees depend on your <span style="color:var(--text);font-weight:600;">vehicle class</span> (light/kombi/truck)<br>
+        ● All amounts are in <span style="color:var(--accent);font-weight:600;">USD</span> as set by ZINARA<br>
+        ● Drivers can use the <span style="color:var(--accent2);font-weight:600;">💬 Negotiate</span> button to discuss who covers toll fees<br>
+        ● Tolls are tracked in the <span style="color:var(--accent);font-weight:600;">driver earnings</span> dashboard
+      </div>
+      <div style="margin-top:16px;background:var(--tolll);border:1px solid rgba(155,89,182,.25);border-radius:10px;padding:12px;">
+        <div style="font-size:12px;color:var(--toll);font-weight:700;margin-bottom:6px;">🛂 ZINARA Contact</div>
+        <div style="font-size:12px;color:var(--muted);">Website: zinara.co.zw<br>Hotline: +263 867 700 0320<br>Fees reviewed annually</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ FIND LOADS ═══════ -->
+<div class="view" id="view-loads">
+  <div class="page-title">FIND A <span>LOAD</span></div>
+  <div class="page-sub">Browse freight and passenger jobs across Zimbabwe. Bid or negotiate directly.</div>
+  <div class="grid-2" style="margin-bottom:16px;">
+    <input type="text" placeholder="🔍  Search loads, routes, cargo..." id="load-search" oninput="filterLoads()"/>
+    <div style="display:flex;gap:10px;">
+      <select id="load-type-filter" onchange="filterLoads()" style="flex:1;">
+        <option value="all">All Types</option>
+        <option value="truck">🚛 Truck</option>
+        <option value="car">🚐 Small Car</option>
+        <option value="passenger">🧑‍💼 Passenger</option>
+      </select>
+      <button class="btn btn-primary" onclick="openModal('postLoad')">+ Post</button>
+    </div>
+  </div>
+  <div id="loads-list"></div>
+</div>
+
+<!-- ═══════ TRACKING ═══════ -->
+<div class="view" id="view-tracking">
+  <div class="page-title">LIVE <span>TRACKING</span></div>
+  <div class="page-sub">Real-time trip monitoring with toll stop visibility</div>
+  <div class="grid-2" style="align-items:start;">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="form-group" style="margin-bottom:0;"><label>Track by Trip ID</label><div style="display:flex;gap:8px;"><input type="text" placeholder="TRK-04, PAX-07..." id="trip-id-input"/><button class="btn btn-primary" onclick="trackTrip()">Track</button></div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Active Trip</div><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:21px;letter-spacing:1px;">TRK-04 · Harare → Byo</div></div>
+          <span class="badge badge-active">● In Transit</span>
+        </div>
+        <div class="tracker-steps">
+          <div class="tracker-line"></div>
+          <div class="tracker-step done"><div class="tracker-step-title">Load Picked Up</div><div class="tracker-step-desc">Cement bags — Harare depot</div><div class="tracker-step-time">06:30 AM ✓</div></div>
+          <div class="tracker-step done"><div class="tracker-step-title">Departed Harare on A1</div><div class="tracker-step-desc">Driver James M.</div><div class="tracker-step-time">07:15 AM ✓</div></div>
+          <div class="tracker-step done toll-step"><div class="tracker-step-title">🛂 Harare West Toll — Paid $3.00</div><div class="tracker-step-desc">A1 Highway — Heavy Truck rate</div><div class="tracker-step-time">07:42 AM ✓</div></div>
+          <div class="tracker-step active"><div class="tracker-step-title">⛽ Fuel Stop — Zuva Gweru</div><div class="tracker-step-desc">Refuelling — 142 km remaining</div><div class="tracker-step-time">ETA Byo — 2:45 PM</div></div>
+          <div class="tracker-step"><div class="tracker-step-title">🛂 Battlefields Toll — $3.00 due</div><div class="tracker-step-desc">A1 Highway</div></div>
+          <div class="tracker-step"><div class="tracker-step-title">Arrival &amp; Unloading — Byo</div></div>
+          <div class="tracker-step"><div class="tracker-step-title">Trip Complete — Payment Released</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:12px;">Driver Info</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+        <div style="font-size:38px;">👨‍✈️</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:15px;">James Moyo</div><div style="font-size:12px;color:var(--muted);">🚛 Heavy Truck · 5 yrs</div><div class="stars" style="margin:4px 0;">★★★★★ 4.9</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px;"><button class="btn btn-secondary btn-sm" onclick="showToast('📞 Calling James...','📞')">📞</button><button class="btn btn-negotiate btn-sm" onclick="openModal('negotiate')">💬 Negotiate</button></div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-title" style="margin-bottom:10px;">Trip Cost Breakdown</div>
+      <table class="fuel-cost-table">
+        <tr><td>Distance</td><td class="mono text-accent" style="text-align:right;">440 km</td></tr>
+        <tr><td>Base Fare</td><td class="mono" style="text-align:right;">$80</td></tr>
+        <tr><td>Distance Fee</td><td class="mono" style="text-align:right;">$132</td></tr>
+        <tr><td>Fuel Cost (est.)</td><td class="mono text-fuel" style="text-align:right;">$233.64</td></tr>
+        <tr><td style="color:var(--toll);">🛂 Toll Charges (A1 × 3)</td><td class="mono text-toll" style="text-align:right;">$9.00</td></tr>
+        <tr><td><strong>Total Charged</strong></td><td class="mono text-accent" style="text-align:right;font-weight:700;font-size:15px;">$286.00</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ FARE + FUEL + TOLL ═══════ -->
+<div class="view" id="view-fare">
+  <div class="page-title">FARE + FUEL + <span>TOLL</span></div>
+  <div class="page-sub">Full trip cost including fuel (ZERA Mar 2026) and ZINARA tollgate fees</div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+    <div class="fuel-banner" style="flex:1;margin-bottom:0;">
+      <span>⛽</span>
+      <div class="fuel-price-chip"><div class="fuel-price-val">$1.71</div><div class="fuel-price-lbl">Petrol</div></div>
+      <div class="fuel-price-chip"><div class="fuel-price-val">$1.77</div><div class="fuel-price-lbl">Diesel</div></div>
+      <div class="fuel-banner-info"><div class="fuel-banner-title">ZERA — 4 March 2026</div><div class="fuel-banner-sub">Reviewed fortnightly</div></div>
+    </div>
+    <div class="toll-banner" style="flex:1;margin-bottom:0;">
+      <span style="font-size:22px;">🛂</span>
+      <div><div class="toll-banner-title">ZINARA Tolls Auto-Included</div><div class="toll-banner-sub">Select route to auto-fill toll fees</div></div>
+    </div>
+  </div>
+  <div class="grid-2" style="align-items:start;">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:14px;">Trip Details</div>
+      <div class="form-group">
+        <label>Vehicle Type</label>
+        <select id="fare-type" onchange="calcFare()">
+          <option value="truck">🚛 Heavy Truck (30L/100km · Diesel)</option>
+          <option value="medtruck">🚛 Medium Truck (18L/100km · Diesel)</option>
+          <option value="car">🚐 Small Car/Van (10L/100km · Petrol)</option>
+          <option value="sedan">🚗 Sedan/Taxi (7L/100km · Petrol)</option>
+          <option value="passenger">🚌 Kombi (12L/100km · Diesel)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Route (auto-fills toll fees)</label>
+        <select id="fare-route" onchange="routeSelected()">
+          <option value="custom">Custom / Enter distance manually</option>
+          <option value="hre-byo">Harare → Bulawayo (440km · 3 tolls)</option>
+          <option value="hre-mut">Harare → Mutare (263km · 2 tolls)</option>
+          <option value="hre-msv">Harare → Masvingo (292km · 1 toll)</option>
+          <option value="hre-chi">Harare → Chinhoyi (116km · 0 tolls)</option>
+          <option value="byo-vf">Bulawayo → Victoria Falls (439km · 1 toll)</option>
+          <option value="byo-bb">Bulawayo → Beitbridge (322km · 2 tolls)</option>
+          <option value="hre-vf">Harare → Victoria Falls (879km · 4 tolls)</option>
+        </select>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>Distance (km)</label><input type="number" id="fare-distance" value="440" min="1" oninput="calcFare()"/></div>
+        <div class="form-group"><label id="weight-label">Cargo (tonnes)</label><input type="number" id="fare-weight" value="1" min="0.1" step="0.1" oninput="calcFare()"/></div>
+      </div>
+      <div class="form-group"><label>Number of Tollgates on Route</label><input type="number" id="toll-count" value="3" min="0" max="10" oninput="calcFare()"/></div>
+      <div class="form-group"><label>Notes</label><textarea placeholder="Special cargo, handling notes..."></textarea></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" style="flex:1;" onclick="openModal('bookRide')">Book This Trip →</button>
+        <button class="btn btn-negotiate" onclick="openModal('negotiate')">💬 Negotiate Fare</button>
+      </div>
+    </div>
+    <div>
+      <div class="fare-display">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">Total Trip Cost</div>
+        <div class="fare-amount"><span class="fare-currency">$</span><span id="fare-total">295</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:5px;">USD · Fuel + Toll included</div>
+        <div class="fare-breakdown">
+          <div class="fare-item"><div class="fare-item-val" id="fare-base">$80</div><div class="fare-item-lbl">Base Rate</div></div>
+          <div class="fare-item"><div class="fare-item-val" id="fare-dist-cost">$132</div><div class="fare-item-lbl">Distance</div></div>
+          <div class="fare-item"><div class="fare-item-val" id="fare-weight-cost">$10</div><div class="fare-item-lbl">Cargo/Pax</div></div>
+          <div class="fare-item toll-fare-item"><div class="fare-item-val" id="fare-fuel-cost">$233</div><div class="fare-item-lbl">⛽ Fuel</div></div>
+          <div class="fare-item toll-fare-item"><div class="fare-item-val" id="fare-toll-cost">$9</div><div class="fare-item-lbl">🛂 Tolls</div></div>
+          <div class="fare-item" style="border:1px solid rgba(200,245,58,.2);"><div class="fare-item-val" id="fare-per-km">$0.67</div><div class="fare-item-lbl">Per km</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;border-color:rgba(155,89,182,.2);">
+        <div class="section-title" style="margin-bottom:10px;color:var(--toll);">🛂 Toll Breakdown</div>
+        <table class="fuel-cost-table">
+          <tr><td>Tollgates on route</td><td class="mono text-toll" style="text-align:right;" id="toll-gates-count">3 gates</td></tr>
+          <tr><td>Fee per gate</td><td class="mono text-toll" style="text-align:right;" id="toll-per-gate">$3.00</td></tr>
+          <tr><td><strong>Total Toll Charge</strong></td><td class="mono text-toll" style="text-align:right;font-weight:700;" id="toll-total-display">$9.00</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:10px;">Payment Method</div>
+        <div class="payment-card selected" onclick="selectPayment(this)"><div style="font-size:22px;">💵</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;">Cash on Delivery</div><div style="font-size:11px;color:var(--muted);">Pay driver on arrival</div></div><div class="payment-check">✓</div></div>
+        <div class="payment-card" onclick="selectPayment(this)"><div style="font-size:22px;">📱</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;">EcoCash / MoMo</div><div style="font-size:11px;color:var(--muted);">Mobile money</div></div><div class="payment-check" style="opacity:0;">✓</div></div>
+        <div class="payment-card" onclick="selectPayment(this)"><div style="font-size:22px;">💳</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;">Bank Transfer</div><div style="font-size:11px;color:var(--muted);">Direct transfer</div></div><div class="payment-check" style="opacity:0;">✓</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ DRIVERS ═══════ -->
+<div class="view" id="view-drivers">
+  <div class="page-title">OUR <span>DRIVERS</span></div>
+  <div class="page-sub">Vetted drivers with verified photos of their vehicles and services</div>
+  <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+    <div class="tab-group" style="margin-bottom:0;flex:1;min-width:200px;">
+      <button class="tab-btn active" onclick="filterDriverType('all',this)">All</button>
+      <button class="tab-btn" onclick="filterDriverType('truck',this)">🚛 Trucks</button>
+      <button class="tab-btn" onclick="filterDriverType('car',this)">🚐 Vans</button>
+      <button class="tab-btn" onclick="filterDriverType('passenger',this)">🧑‍💼 Passenger</button>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('registerDriver')">+ Register as Driver</button>
+  </div>
+  <div class="grid-3" id="drivers-grid"></div>
+</div>
+
+<!-- ═══════ SUGGESTIONS ═══════ -->
+<div class="view" id="view-suggest">
+  <div class="page-title">WHAT TO <span>ADD NEXT</span></div>
+  <div class="page-sub">Feature roadmap for LoadingHub</div>
+  <div class="grid-3" style="margin-bottom:18px;">
+    <div class="suggestion-card"><div class="suggestion-icon">📱</div><div class="suggestion-title">WhatsApp Bot</div><div class="suggestion-desc">Post loads, track trips and get fare quotes via WhatsApp — no app needed.</div><span class="suggestion-tag tag-soon">🔥 Priority</span></div>
+    <div class="suggestion-card"><div class="suggestion-icon">📲</div><div class="suggestion-title">EcoCash / ZimSwitch</div><div class="suggestion-desc">Native mobile money payments with automatic driver/platform split on completion.</div><span class="suggestion-tag tag-soon">🔥 Priority</span></div>
+    <div class="suggestion-card"><div class="suggestion-icon">🔔</div><div class="suggestion-title">SMS Notifications</div><div class="suggestion-desc">Trip alerts via SMS — works on any phone without internet.</div><span class="suggestion-tag tag-soon">🔥 Priority</span></div>
+    <div class="suggestion-card"><div class="suggestion-icon">🛣️</div><div class="suggestion-title">Route Optimizer</div><div class="suggestion-desc">Best route suggestions with fuel stations, toll locations and road conditions.</div><span class="suggestion-tag tag-mvp">✅ MVP</span></div>
+    <div class="suggestion-card"><div class="suggestion-icon">🔄</div><div class="suggestion-title">Return Load Matching</div><div class="suggestion-desc">Auto-suggest loads for the return journey. Eliminate empty trips.</div><span class="suggestion-tag tag-mvp">✅ MVP</span></div>
+    <div class="suggestion-card"><div class="suggestion-icon">🛡️</div><div class="suggestion-title">Cargo Insurance</div><div class="suggestion-desc">One-click trip insurance via Zimnat. Priced as % of load value.</div><span class="suggestion-tag tag-future">🔮 Future</span></div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,rgba(200,245,58,.05),transparent);border-color:rgba(200,245,58,.15);">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:34px;">💡</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:4px;">Suggest a Feature</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">What would make LoadingHub work better for Zimbabwe's roads?</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;"><input type="text" placeholder="Your idea..." style="max-width:340px;flex:1;"/><button class="btn btn-primary" onclick="showToast('💡 Idea submitted!','💡')">Submit</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ PROFILE (role-dependent) ═══════ -->
+<div class="view" id="view-profile">
+  <!-- CLIENT PROFILE -->
+  <div id="profile-client">
+    <div class="page-title">CLIENT <span>PROFILE</span></div>
+    <div class="page-sub">Manage your shipping account and preferences</div>
+    <div class="profile-header">
+      <div class="profile-big-avatar client-av">👤</div>
+      <div style="flex:1;">
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:30px;letter-spacing:1px;">Tinashe Dube</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:3px;">📍 Harare · Member since 2024</div>
+        <div style="margin-top:4px;"><span class="badge badge-car">CLIENT ACCOUNT</span></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('✅ Profile saved!')">Save Changes</button>
+          <button class="btn btn-secondary btn-sm" onclick="openModal('registerDriver')">Upgrade to Driver Account</button>
+          <button class="btn btn-ghost btn-sm" onclick="showRoleScreen()">Switch Role</button>
+        </div>
+      </div>
+      <div style="text-align:right;"><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:38px;color:var(--client);">4.7★</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Shipper Rating</div></div>
+    </div>
+    <div class="grid-2" style="align-items:start;">
+      <div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="section-title" style="margin-bottom:12px;">Account Details</div>
+          <div class="form-group"><label>Full Name</label><input type="text" value="Tinashe Dube"/></div>
+          <div class="form-group"><label>Phone</label><input type="tel" value="+263 77 123 4567"/></div>
+          <div class="form-group"><label>Email</label><input type="email" value="tinashe@example.com"/></div>
+          <div class="form-group"><label>City</label><input type="text" value="Harare"/></div>
+          <div class="form-group"><label>Preferred Payment</label><select><option>Cash on Delivery</option><option>EcoCash</option><option>Bank Transfer</option></select></div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:10px;">Client Stats</div>
+          <div class="grid-2">
+            <div class="driver-stat"><div class="driver-stat-val">34</div><div class="driver-stat-lbl">Loads Posted</div></div>
+            <div class="driver-stat"><div class="driver-stat-val">12</div><div class="driver-stat-lbl">Rides Booked</div></div>
+            <div class="driver-stat"><div class="driver-stat-val" style="color:var(--accent2);">$4,280</div><div class="driver-stat-lbl">Total Spent</div></div>
+            <div class="driver-stat"><div class="driver-stat-val" style="color:var(--toll);">$48</div><div class="driver-stat-lbl">Tolls Paid</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin-bottom:6px;">Recent Activity</div>
+        <div class="activity-item"><div class="activity-icon">🚛</div><div class="activity-info"><div class="activity-title">Cement — Harare to Byo</div><div class="activity-date">Today · 🛂 Tolls: $9 included</div></div><div class="activity-amount negative">-$286</div></div>
+        <div class="activity-item"><div class="activity-icon">🧑‍💼</div><div class="activity-info"><div class="activity-title">Passenger Ride — CBD to Airport</div><div class="activity-date">Yesterday</div></div><div class="activity-amount negative">-$18</div></div>
+        <div class="activity-item"><div class="activity-icon">💬</div><div class="activity-info"><div class="activity-title">Negotiation — Electronics Mutare</div><div class="activity-date">Mar 10 · Counter accepted at $95</div></div><div class="activity-amount negative">-$95</div></div>
+        <div class="activity-item"><div class="activity-icon">💰</div><div class="activity-info"><div class="activity-title">EcoCash Wallet Top-Up</div><div class="activity-date">Mar 8</div></div><div class="activity-amount positive">+$500</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRIVER PROFILE -->
+  <div id="profile-driver" style="display:none;">
+    <div class="page-title">DRIVER <span>PROFILE</span></div>
+    <div class="page-sub">Manage your driver account, upload vehicle photos and track earnings</div>
+    <div class="profile-header">
+      <div class="profile-big-avatar driver-av">👨‍✈️</div>
+      <div style="flex:1;">
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:30px;letter-spacing:1px;">James Moyo</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:3px;">📍 Harare · 🚛 Heavy Truck · 5 yrs experience</div>
+        <div style="margin-top:4px;"><span class="badge badge-truck">DRIVER ACCOUNT</span></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('✅ Profile saved!')">Save Changes</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('photo-upload-input').click()">📷 Add Service Photos</button>
+          <button class="btn btn-ghost btn-sm" onclick="showRoleScreen()">Switch Role</button>
+        </div>
+        <input type="file" id="photo-upload-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event)"/>
+      </div>
+      <div style="text-align:right;"><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:38px;color:var(--driver);">4.9★</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Driver Rating</div></div>
+    </div>
+
+    <div class="grid-2" style="align-items:start;">
+      <div>
+        <!-- Vehicle & Service Photos -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="section-header">
+            <div class="section-title">My Vehicle & Service Photos</div>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('photo-upload-input').click()">+ Add Photo</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Show clients what you offer — truck photos, loading area, cargo type handled, past deliveries</div>
+          <div class="photo-gallery" id="driver-photo-gallery">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Driver Account Details -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="section-title" style="margin-bottom:12px;">Driver Details</div>
+          <div class="form-group"><label>Full Name</label><input type="text" value="James Moyo"/></div>
+          <div class="form-group"><label>Phone</label><input type="tel" value="+263 77 456 7890"/></div>
+          <div class="form-group"><label>City / Base Location</label><input type="text" value="Harare"/></div>
+          <div class="form-group"><label>Vehicle Registration</label><input type="text" value="AAA 1234Z"/></div>
+          <div class="form-group"><label>Vehicle Type</label>
+            <select><option selected>🚛 Heavy Truck (5+ tonnes)</option><option>🚛 Medium Truck (2–5 tonnes)</option><option>🚐 Mini Van</option><option>🚗 Sedan/Taxi</option><option>🚙 Kombi</option></select>
+          </div>
+          <div class="form-group"><label>Services Offered</label>
+            <textarea style="min-height:70px;">Long-haul freight, bulk agricultural goods, cement and building materials. Available 24/7. Experienced on Harare–Bulawayo A1 and Harare–Mutare A3 routes.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Driver Stats -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="section-title" style="margin-bottom:10px;">Driver Stats</div>
+          <div class="grid-2">
+            <div class="driver-stat"><div class="driver-stat-val">312</div><div class="driver-stat-lbl">Total Trips</div></div>
+            <div class="driver-stat"><div class="driver-stat-val">45K</div><div class="driver-stat-lbl">KM Driven</div></div>
+            <div class="driver-stat"><div class="driver-stat-val" style="color:var(--accent2);">$1,840</div><div class="driver-stat-lbl">This Month</div></div>
+            <div class="driver-stat"><div class="driver-stat-val" style="color:var(--toll);">$48</div><div class="driver-stat-lbl">Tolls Paid</div></div>
+          </div>
+        </div>
+        <!-- Earnings -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="section-title" style="margin-bottom:6px;">Earnings Log</div>
+          <div class="activity-item"><div class="activity-icon">🚛</div><div class="activity-info"><div class="activity-title">Cement — Harare to Byo</div><div class="activity-date">Today · 🛂 Tolls paid: $9</div></div><div class="activity-amount positive">+$280</div></div>
+          <div class="activity-item"><div class="activity-icon">🧑‍💼</div><div class="activity-info"><div class="activity-title">Passengers — CBD to Airport</div><div class="activity-date">Yesterday · No toll</div></div><div class="activity-amount positive">+$18</div></div>
+          <div class="activity-item"><div class="activity-icon">⛽</div><div class="activity-info"><div class="activity-title">Fuel — TotalEnergies Harare (80L)</div><div class="activity-date">Yesterday</div></div><div class="activity-amount negative">-$141.60</div></div>
+          <div class="activity-item"><div class="activity-icon">🛂</div><div class="activity-info"><div class="activity-title">Battlefields Tollgate</div><div class="activity-date">A1 Harare–Bulawayo</div></div><div class="activity-amount negative">-$3.00</div></div>
+        </div>
+        <!-- Availability toggle -->
+        <div class="card">
+          <div class="section-title" style="margin-bottom:12px;">Availability</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div><div style="font-weight:600;font-size:14px;">Currently Online</div><div style="font-size:12px;color:var(--muted);">Visible to clients posting loads</div></div>
+            <button id="avail-btn" class="btn btn-primary btn-sm" onclick="toggleAvailability()" style="min-width:80px;">● Online</button>
+          </div>
+          <div class="form-group" style="margin-bottom:0;"><label>Current Location / Route</label><input type="text" value="Harare — Available for A1 and A3 routes"/></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ANDROID BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bn-btn active" onclick="nav('home')" id="bn-home"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></button>
+  <button class="bn-btn" onclick="nav('map')" id="bn-map"><span class="bn-icon">🗺️</span><span class="bn-label">Map</span></button>
+  <button class="bn-btn" onclick="nav('loads')" id="bn-loads"><span class="bn-icon">📦</span><span class="bn-label">Loads</span></button>
+  <button class="bn-btn" onclick="nav('tollgates')" id="bn-tollgates"><span class="bn-icon">🛂</span><span class="bn-label">Tolls</span></button>
+  <button class="bn-btn" onclick="nav('fare')" id="bn-fare"><span class="bn-icon">⛽</span><span class="bn-label">Fare</span></button>
+  <button class="bn-btn" onclick="nav('profile')" id="bn-profile"><span class="bn-icon">👤</span><span class="bn-label">Profile</span></button>
+</nav>
+
+<!-- ════════════ MODALS ════════════ -->
+
+<!-- POST LOAD -->
+<div class="modal-overlay" id="modal-postLoad">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">POST A LOAD</div><button class="btn btn-ghost btn-sm" onclick="closeModal('postLoad')">✕</button></div>
+    <div class="mode-cards"><div class="mode-card truck-mode selected" onclick="selectMode(this,'truck-mode')"><div class="mode-emoji">🚛</div><div class="mode-title">Heavy Truck</div><div class="mode-desc">1+ tonnes</div></div><div class="mode-card car-mode" onclick="selectMode(this,'car-mode')"><div class="mode-emoji">🚐</div><div class="mode-title">Small Car/Van</div><div class="mode-desc">Up to 1t</div></div><div class="mode-card pax-mode" onclick="selectMode(this,'pax-mode')"><div class="mode-emoji">🧑‍💼</div><div class="mode-title">Passenger</div><div class="mode-desc">People</div></div></div>
+    <div class="form-group"><label>Pickup Location</label><input type="text" placeholder="e.g. Harare CBD..."/></div>
+    <div class="form-group"><label>Delivery / Drop-off</label><input type="text" placeholder="e.g. Bulawayo..."/></div>
+    <div class="grid-2"><div class="form-group"><label>Date</label><input type="date"/></div><div class="form-group"><label>Time</label><input type="time"/></div></div>
+    <div class="form-group"><label>Cargo / Passengers</label><textarea placeholder="Describe what needs to be moved..."></textarea></div>
+    <div class="form-group"><label>Offered Price (USD) — Tollgates auto-added</label><input type="number" placeholder="0.00" min="0"/></div>
+    <div style="background:var(--tolll);border:1px solid rgba(155,89,182,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--toll);margin-bottom:14px;">🛂 Tollgate fees will be calculated and added automatically based on your route</div>
+    <div style="display:flex;gap:10px;"><button class="btn btn-primary btn-full" onclick="submitLoad()">Post Load 🚀</button><button class="btn btn-secondary" onclick="closeModal('postLoad')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- BOOK RIDE -->
+<div class="modal-overlay" id="modal-bookRide">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">BOOK A RIDE</div><button class="btn btn-ghost btn-sm" onclick="closeModal('bookRide')">✕</button></div>
+    <div class="mode-cards"><div class="mode-card truck-mode" onclick="selectMode(this,'truck-mode')"><div class="mode-emoji">🚛</div><div class="mode-title">Freight</div><div class="mode-desc">Goods</div></div><div class="mode-card car-mode" onclick="selectMode(this,'car-mode')"><div class="mode-emoji">🚐</div><div class="mode-title">Van/Car</div><div class="mode-desc">Light cargo</div></div><div class="mode-card pax-mode selected" onclick="selectMode(this,'pax-mode')"><div class="mode-emoji">🧑‍💼</div><div class="mode-title">Passenger</div><div class="mode-desc">Taxi/ride</div></div></div>
+    <div class="form-group"><label>Pickup</label><input type="text" placeholder="Your pickup location"/></div>
+    <div class="form-group"><label>Destination</label><input type="text" placeholder="Where to?"/></div>
+    <div class="grid-2"><div class="form-group"><label>Date</label><input type="date"/></div><div class="form-group"><label>Passengers / Weight</label><input type="number" value="1" min="1"/></div></div>
+    <div class="form-group"><label>Notes for Driver</label><input type="text" placeholder="Any special instructions..."/></div>
+    <div style="display:flex;gap:10px;"><button class="btn btn-primary btn-full" onclick="submitRide()">Confirm Booking ✓</button><button class="btn btn-secondary" onclick="closeModal('bookRide')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- NEGOTIATE MODAL -->
+<div class="modal-overlay" id="modal-negotiate">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">💬 NEGOTIATE FARE</div><button class="btn btn-ghost btn-sm" onclick="closeModal('negotiate')">✕</button></div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Load: Cement Bags — Harare → Bulawayo</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-size:11px;color:var(--muted);">Client's asking price</div><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:32px;color:var(--accent);">$280</div></div>
+        <div style="font-size:24px;">⇄</div>
+        <div style="text-align:right;"><div style="font-size:11px;color:var(--muted);">Includes toll charges</div><div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--toll);">🛂 $9.00 tolls</div></div>
+      </div>
+    </div>
+    <div class="counter-list" id="counter-list">
+      <div class="counter-item"><span style="font-size:18px;">👤</span><div><div class="counter-from">Client (original ask)</div><div class="counter-amount theirs">$280</div></div></div>
+      <div class="counter-item"><span style="font-size:18px;">🚛</span><div><div class="counter-from">James Moyo counter-offered</div><div class="counter-amount mine">$310</div><div style="font-size:11px;color:var(--muted);">Reason: fuel prices increased</div></div><div class="counter-actions"><button class="btn btn-primary btn-sm" onclick="acceptOffer()">✓ Accept</button><button class="btn btn-danger btn-sm" onclick="showToast('❌ Counter-offer declined','❌')">✕</button></div></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Your Counter-Offer</div>
+    <div class="offer-row">
+      <div class="offer-input form-group" style="margin-bottom:0;"><label>Your price (USD)</label><input type="number" id="my-offer" placeholder="Enter amount" min="1"/></div>
+      <div class="form-group" style="margin-bottom:0;flex:2;"><label>Reason (optional)</label><input type="text" id="offer-reason" placeholder="e.g. tolls included, urgent delivery..."/></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-negotiate btn-full" onclick="sendCounter()">💬 Send Counter-Offer</button>
+      <button class="btn btn-primary btn-full" onclick="acceptOffer()">✓ Accept $280</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;">Both parties must agree before the trip is confirmed</div>
+  </div>
+</div>
+
+<!-- REGISTER DRIVER -->
+<div class="modal-overlay" id="modal-registerDriver">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">DRIVER REGISTRATION</div><button class="btn btn-ghost btn-sm" onclick="closeModal('registerDriver')">✕</button></div>
+    <div class="form-group"><label>Full Name</label><input type="text" placeholder="Your full name"/></div>
+    <div class="form-group"><label>Phone</label><input type="tel" placeholder="+263 7X XXX XXXX"/></div>
+    <div class="form-group"><label>City / Base</label><input type="text" placeholder="Home city"/></div>
+    <div class="form-group"><label>Vehicle Type</label><select><option>🚛 Heavy Truck (5+ tonnes)</option><option>🚛 Medium Truck (2–5t)</option><option>🚐 Mini Van</option><option>🚗 Sedan/Taxi</option><option>🚙 Kombi</option></select></div>
+    <div class="grid-2"><div class="form-group"><label>Reg. Number</label><input type="text" placeholder="ABC 123Z"/></div><div class="form-group"><label>Years Experience</label><input type="number" placeholder="0" min="0"/></div></div>
+    <div class="form-group"><label>Upload Vehicle Photos</label><input type="file" accept="image/*" multiple style="padding:8px;font-size:14px;" onchange="showToast('📷 Photos ready to upload','📷')"/></div>
+    <div style="display:flex;gap:10px;"><button class="btn btn-primary btn-full" onclick="submitDriver()">Register 🚛</button><button class="btn btn-secondary" onclick="closeModal('registerDriver')">Cancel</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-icon">✓</span><span id="toast-msg">Done!</span></div>
+
+<script>
+// ═══════════ DATA ═══════════
+const PETROL=1.71, DIESEL=1.77;
+let currentRole = 'client';
+let isOnline = true;
+
+const tollgates=[
+  {name:"Harare West Toll Plaza",road:"A1",route:"Harare–Bulawayo",km:"20km from Harare",light:3.00,kombi:2.00,truck:3.00},
+  {name:"Battlefields Toll Plaza",road:"A1",route:"Harare–Bulawayo",km:"184km from Harare",light:3.00,kombi:2.00,truck:3.00},
+  {name:"Gweru North Toll Plaza",road:"A1",route:"Harare–Bulawayo",km:"290km from Harare",light:3.00,kombi:2.00,truck:3.00},
+  {name:"Harare East Toll Plaza",road:"A3",route:"Harare–Mutare",km:"15km from Harare",light:2.00,kombi:1.50,truck:3.00},
+  {name:"Rusape Toll Plaza",road:"A3",route:"Harare–Mutare",km:"175km from Harare",light:2.00,kombi:1.50,truck:3.00},
+  {name:"Bulawayo South Toll Plaza",road:"A5",route:"Bulawayo–Beitbridge",km:"25km from Byo",light:2.00,kombi:1.50,truck:2.50},
+  {name:"Beitbridge Approach Toll",road:"A5",route:"Bulawayo–Beitbridge",km:"295km from Byo",light:2.00,kombi:1.50,truck:2.50},
+  {name:"Masvingo Toll Plaza",road:"A9",route:"Harare–Masvingo",km:"270km from Harare",light:2.00,kombi:1.50,truck:3.00},
+  {name:"Harare–Vic Falls Toll 1",road:"A1/A8",route:"Harare–Victoria Falls",km:"116km",light:3.00,kombi:2.00,truck:3.00},
+  {name:"Harare–Vic Falls Toll 2",road:"A8",route:"Harare–Victoria Falls",km:"280km",light:3.00,kombi:2.00,truck:3.00},
+  {name:"Harare–Vic Falls Toll 3",road:"A8",route:"Harare–Victoria Falls",km:"450km",light:3.00,kombi:2.00,truck:3.00},
+  {name:"Harare–Vic Falls Toll 4",road:"A8",route:"Harare–Victoria Falls",km:"620km",light:3.00,kombi:2.00,truck:3.00},
+];
+
+const routeTolls={
+  'hre-byo':{km:440,tolls:3,light:9,truck:9,kombi:6,label:'Harare → Bulawayo'},
+  'hre-mut':{km:263,tolls:2,light:4,truck:6,kombi:3,label:'Harare → Mutare'},
+  'hre-msv':{km:292,tolls:1,light:2,truck:3,kombi:1.5,label:'Harare → Masvingo'},
+  'hre-chi':{km:116,tolls:0,light:0,truck:0,kombi:0,label:'Harare → Chinhoyi'},
+  'byo-vf':{km:439,tolls:1,light:3,truck:3,kombi:2,label:'Bulawayo → Victoria Falls'},
+  'byo-bb':{km:322,tolls:2,light:4,truck:5,kombi:3,label:'Bulawayo → Beitbridge'},
+  'hre-vf':{km:879,tolls:4,light:12,truck:12,kombi:8,label:'Harare → Victoria Falls'},
+};
+
+const loadsData=[
+  {id:'TRK-04',type:'truck',icon:'🚛',title:'Cement Bags — 3 Tonnes',from:'Harare',to:'Bulawayo',weight:'3t',date:'Today',price:280,status:'active',tolls:'$9',tollCount:3},
+  {id:'CAR-11',type:'car',icon:'🚐',title:'Electronics — 500kg',from:'Mutare',to:'Harare',weight:'500kg',date:'Tomorrow',price:95,status:'pending',tolls:'$4',tollCount:2},
+  {id:'PAX-07',type:'passenger',icon:'🧑‍💼',title:'Passenger Ride — 2 Seats',from:'Harare CBD',to:'Airport',weight:'2 pax',date:'Today',price:18,status:'active',tolls:'$0',tollCount:0},
+  {id:'TRK-09',type:'truck',icon:'🚛',title:'Maize Grain — 8 Tonnes',from:'Gweru',to:'Harare',weight:'8t',date:'Mar 16',price:340,status:'pending',tolls:'$3',tollCount:1},
+  {id:'CAR-05',type:'car',icon:'🚐',title:'Furniture — 300kg',from:'Bulawayo',to:'Gweru',weight:'300kg',date:'Mar 17',price:70,status:'active',tolls:'$3',tollCount:1},
+  {id:'PAX-12',type:'passenger',icon:'🧑‍💼',title:'Kombi — 4 Seats',from:'Masvingo',to:'Harare',weight:'4 pax',date:'Mar 18',price:45,status:'pending',tolls:'$3',tollCount:1},
+  {id:'TRK-01',type:'truck',icon:'🚛',title:'Steel Rods — 5 Tonnes',from:'Harare',to:'Mutare',weight:'5t',date:'Mar 19',price:210,status:'done',tolls:'$6',tollCount:2},
+];
+
+const driversData=[
+  {name:'James Moyo',type:'truck',emoji:'👨‍✈️',rating:4.9,trips:312,km:45200,city:'Harare',badge:'badge-truck',label:'Truck Driver',
+   photos:['🚛','📦','🏗️'],photoLabels:['My Truck','Loading Area','Bulk Cargo'],
+   services:'Long-haul freight, A1 & A3 routes, available 24/7'},
+  {name:'Grace Ncube',type:'passenger',emoji:'👩‍💼',rating:4.8,trips:187,km:18900,city:'Bulawayo',badge:'badge-passenger',label:'Passenger Driver',
+   photos:['🚗','🛋️','🗺️'],photoLabels:['My Sedan','Interior','Routes'],
+   services:'Intercity rides, airport transfers, air-conditioned vehicle'},
+  {name:'Peter Khumalo',type:'car',emoji:'👨‍🔧',rating:4.7,trips:241,km:31000,city:'Mutare',badge:'badge-car',label:'Van Driver',
+   photos:['🚐','📦','🔧'],photoLabels:['My Van','Cargo Space','Equipment'],
+   services:'Light freight, electronics, furniture — Mutare & Manicaland region'},
+  {name:'Blessing C.',type:'truck',emoji:'👨‍✈️',rating:5.0,trips:98,km:22100,city:'Gweru',badge:'badge-truck',label:'Truck Driver',
+   photos:['🚛','🌾','⚖️'],photoLabels:['My Truck','Agricultural','Weigh Bridge'],
+   services:'Agricultural goods, grain, maize — Midlands routes'},
+  {name:'Rudo Zimba',type:'passenger',emoji:'👩‍🦱',rating:4.9,trips:405,km:29800,city:'Harare',badge:'badge-passenger',label:'Passenger Driver',
+   photos:['🚙','🛋️','⭐'],photoLabels:['My SUV','Comfort','Top Rated'],
+   services:'Premium SUV, executive rides, airport pick-up & drop-off'},
+  {name:'Farai Mutasa',type:'car',emoji:'🧑‍🔧',rating:4.6,trips:155,km:19200,city:'Masvingo',badge:'badge-car',label:'Van Driver',
+   photos:['🚐','📱','📬'],photoLabels:['My Van','Electronics','Courier'],
+   services:'Courier deliveries, small cargo, Masvingo & Midlands area'},
+];
+
+// Driver service photos state
+let driverPhotos = [
+  {emoji:'🚛',label:'My Heavy Truck'},
+  {emoji:'📦',label:'Cargo / Loading'},
+  {emoji:'🏗️',label:'Construction Materials'},
+  {emoji:'🛣️',label:'Long-haul Routes'},
+];
+
+// ═══════════ ROLE SELECT ═══════════
+function selectRole(role){
+  currentRole = role;
+  document.getElementById('role-screen').style.display='none';
+  document.getElementById('mobile-topbar').style.display='flex';
+  // Update mobile label
+  document.getElementById('mobile-role-label').textContent = role==='client' ? 'Client Dashboard' : 'Driver Dashboard';
+  document.getElementById('mobile-role-badge').textContent = role==='client' ? 'CLIENT' : 'DRIVER';
+  document.getElementById('mobile-role-badge').className = role==='client' ? 'badge badge-car' : 'badge badge-truck';
+  updateDashboards();
+  renderTollTable();
+  renderRouteTolls();
+  renderDrivers(driversData);
+  renderDriverPhotos();
+  calcFare();
+  renderLoads(loadsData);
+}
+
+function showRoleScreen(){
+  document.getElementById('role-screen').style.display='flex';
+  document.getElementById('mobile-topbar').style.display='none';
+}
+
+function updateDashboards(){
+  document.getElementById('dash-client').style.display = currentRole==='client'?'block':'none';
+  document.getElementById('dash-driver').style.display = currentRole==='driver'?'block':'none';
+  document.getElementById('profile-client').style.display = currentRole==='client'?'block':'none';
+  document.getElementById('profile-driver').style.display = currentRole==='driver'?'block':'none';
+}
+
+// ═══════════ NAVIGATION ═══════════
+function nav(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(document.getElementById('nav-'+id)) document.getElementById('nav-'+id).classList.add('active');
+  if(document.getElementById('bn-'+id)) document.getElementById('bn-'+id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='loads')renderLoads(loadsData);
+  if(id==='drivers')renderDrivers(driversData);
+}
+
+// ═══════════ MAP ═══════════
+const cityDB={
+  'Harare':{province:'Mashonaland East',dist:0,tollNote:'Origin — toll charges begin outbound'},
+  'Bulawayo':{province:'Bulawayo Province',dist:440,tollNote:'3 tolls on A1 — $9 truck'},
+  'Mutare':{province:'Manicaland',dist:263,tollNote:'2 tolls on A3 — $6 truck'},
+  'Gweru':{province:'Midlands',dist:290,tollNote:'1 toll on A1 — $3 truck'},
+  'Masvingo':{province:'Masvingo Province',dist:292,tollNote:'1 toll on A9 — $3 truck'},
+  'Victoria Falls':{province:'Matabeleland North',dist:879,tollNote:'4 tolls — $12 truck'},
+  'Beitbridge':{province:'Matabeleland South',dist:581,tollNote:'2 tolls via A5 — $5 truck'},
+  'Kwekwe':{province:'Midlands',dist:220,tollNote:'1 toll on A1'},
+  'Chinhoyi':{province:'Mashonaland West',dist:116,tollNote:'No tollgates'},
+  'Hwange':{province:'Matabeleland North',dist:630,tollNote:'2 tolls via A8'},
+};
+
+const tollData={
+  'Harare West Toll (A1)':{light:3,truck:3,route:'A1'},
+  'Battlefields Toll (A1)':{light:3,truck:3,route:'A1'},
+  'Gweru North Toll (A1)':{light:3,truck:3,route:'A1'},
+  'Harare East Toll (A3)':{light:2,truck:3,route:'A3'},
+  'Rusape Toll (A3)':{light:2,truck:3,route:'A3'},
+  'Bulawayo South Toll (A5)':{light:2,truck:2.5,route:'A5'},
+  'Beitbridge Approach Toll (A5)':{light:2,truck:2.5,route:'A5'},
+  'Masvingo Toll (A9)':{light:2,truck:3,route:'A9'},
+};
+
+const layerOn={fuel:true,cities:true,roads:true,toll:true};
+function toggleLayer(l){
+  layerOn[l]=!layerOn[l];
+  document.getElementById('layer-'+l).style.display=layerOn[l]?'':'none';
+  const b=document.getElementById('tog-'+l);
+  b.className='map-toggle'+(layerOn[l]?' on-'+l:'');
+}
+function cityHover(name,sx,sy,e){
+  const c=cityDB[name]; if(!c)return;
+  const mc=document.getElementById('map-container');
+  const r=mc.getBoundingClientRect();
+  const tt=document.getElementById('city-tooltip');
+  document.getElementById('ct-name').textContent=name;
+  document.getElementById('ct-province').textContent=c.province;
+  document.getElementById('ct-dist').textContent=c.dist===0?'Capital':c.dist+' km';
+  document.getElementById('ct-toll').textContent=c.tollNote;
+  let lx=(sx*(r.width/760))+14, ly=(sy*(r.height/540))-10;
+  if(lx+175>r.width)lx=(sx*(r.width/760))-190;
+  tt.style.left=lx+'px'; tt.style.top=ly+'px';
+  tt.classList.add('show');
+  document.getElementById('fuel-tooltip').classList.remove('show');
+  document.getElementById('toll-tooltip').classList.remove('show');
+}
+function cityClick(name){showToast('🏙️ '+name+' — '+cityDB[name].province,'🏙️');}
+function fuelHover(name,sx,sy,e){
+  const mc=document.getElementById('map-container');
+  const r=mc.getBoundingClientRect();
+  const tt=document.getElementById('fuel-tooltip');
+  document.getElementById('ft-name').textContent='⛽ '+name;
+  let lx=(sx*(r.width/760))+14, ly=(sy*(r.height/540))-80;
+  if(lx+170>r.width)lx=(sx*(r.width/760))-185;
+  if(ly<0)ly=5;
+  tt.style.left=lx+'px'; tt.style.top=ly+'px';
+  tt.classList.add('show');
+  document.getElementById('city-tooltip').classList.remove('show');
+  document.getElementById('toll-tooltip').classList.remove('show');
+}
+function tollHover(name,sx,sy,e){
+  const td=tollData[name]; if(!td)return;
+  const mc=document.getElementById('map-container');
+  const r=mc.getBoundingClientRect();
+  const tt=document.getElementById('toll-tooltip');
+  document.getElementById('tt-name').textContent='🛂 '+name;
+  document.getElementById('tt-light').textContent='$'+td.light.toFixed(2);
+  document.getElementById('tt-heavy').textContent='$'+td.truck.toFixed(2);
+  document.getElementById('tt-route').textContent=td.route+' Highway';
+  let lx=(sx*(r.width/760))+14, ly=(sy*(r.height/540))-90;
+  if(lx+175>r.width)lx=(sx*(r.width/760))-190;
+  if(ly<0)ly=5;
+  tt.style.left=lx+'px'; tt.style.top=ly+'px';
+  tt.classList.add('show');
+  document.getElementById('city-tooltip').classList.remove('show');
+  document.getElementById('fuel-tooltip').classList.remove('show');
+}
+function hideAllTooltips(){
+  document.getElementById('city-tooltip').classList.remove('show');
+  document.getElementById('fuel-tooltip').classList.remove('show');
+  document.getElementById('toll-tooltip').classList.remove('show');
+}
+
+// ═══════════ TOLLGATE TABLE ═══════════
+function renderTollTable(){
+  const tbody=document.getElementById('toll-table-body');
+  if(!tbody)return;
+  tbody.innerHTML=tollgates.map((t,i)=>`
+    <tr style="background:${i%2===0?'transparent':'rgba(37,43,37,0.3)'}">
+      <td><strong>${t.name}</strong></td>
+      <td><span class="toll-route-tag">${t.road}</span></td>
+      <td style="font-size:12px;color:var(--muted);">${t.route} · ${t.km}</td>
+      <td class="mono text-toll">$${t.light.toFixed(2)}</td>
+      <td class="mono text-toll">$${t.truck.toFixed(2)}</td>
+      <td class="mono text-toll">$${t.kombi.toFixed(2)}</td>
+    </tr>`).join('');
+}
+function renderRouteTolls(){
+  const el=document.getElementById('route-toll-list');
+  if(!el)return;
+  el.innerHTML=Object.entries(routeTolls).map(([k,v])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <div style="font-weight:600;font-size:13px;">${v.label}</div>
+        <div style="font-size:11px;color:var(--muted);">${v.km} km · ${v.tolls} tollgate${v.tolls!==1?'s':''}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--toll);">Truck: $${v.truck}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);">Light: $${v.light}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════ LOADS ═══════════
+function renderLoads(data){
+  const el=document.getElementById('loads-list');
+  if(!el)return;
+  const isDriver=(currentRole==='driver');
+  el.innerHTML=data.length?data.map(l=>`
+    <div class="load-card">
+      <div class="load-icon ${l.type}">${l.icon}</div>
+      <div class="load-info">
+        <div class="load-title">${l.title}</div>
+        <div class="load-route">${l.from} <span>→</span> ${l.to}</div>
+        <div class="load-meta">
+          <span class="badge badge-${l.type}">${l.type==='truck'?'Truck':l.type==='car'?'Small Car':'Passenger'}</span>
+          <span class="badge badge-${l.status==='active'?'active':l.status==='pending'?'pending':'done'}">${l.status==='active'?'● Active':l.status==='pending'?'◌ Open':'✓ Done'}</span>
+          ${l.tollCount>0?`<span class="badge badge-toll">🛂 ${l.tollCount} toll${l.tollCount>1?'s':''} ${l.tolls}</span>`:''}
+          <span style="font-size:11px;color:var(--muted);">⚖ ${l.weight} · 📅 ${l.date}</span>
+        </div>
+        ${isDriver&&l.status==='pending'?`
+        <div class="negotiate-row">
+          <button class="btn btn-primary btn-sm" onclick="showToast('📩 Bid sent for ${l.id}!','📩')">Bid $${l.price}</button>
+          <button class="btn btn-negotiate btn-sm" onclick="openModal('negotiate')">💬 Negotiate</button>
+        </div>`:
+        !isDriver&&l.status==='pending'?`
+        <div class="negotiate-row">
+          <button class="btn btn-secondary btn-sm" onclick="showToast('👀 Viewing bids for ${l.id}','👀')">View Bids</button>
+        </div>`:''}
+      </div>
+      <div class="load-price-col">
+        <div class="load-price">$${l.price}<small>USD</small></div>
+        ${l.tollCount>0?`<div class="load-toll">+${l.tolls} tolls</div>`:''}
+      </div>
+    </div>`).join(''):'<div style="text-align:center;padding:36px;color:var(--muted);">No loads found.</div>';
+}
+function filterLoads(){
+  const q=document.getElementById('load-search').value.toLowerCase();
+  const t=document.getElementById('load-type-filter').value;
+  renderLoads(loadsData.filter(l=>{
+    const mq=l.title.toLowerCase().includes(q)||l.from.toLowerCase().includes(q)||l.to.toLowerCase().includes(q);
+    return mq&&(t==='all'||l.type===t);
+  }));
+}
+
+// ═══════════ DRIVERS ═══════════
+function renderDrivers(data){
+  const el=document.getElementById('drivers-grid');
+  if(!el)return;
+  el.innerHTML=data.map(d=>`
+    <div class="driver-card">
+      <div class="driver-header">
+        <div class="driver-avatar-wrap">
+          <div class="driver-avatar">${d.emoji}</div>
+          <div class="driver-online-dot"></div>
+        </div>
+        <div style="flex:1;">
+          <div class="driver-name">${d.name}</div>
+          <div class="driver-type-lbl"><span class="badge ${d.badge}" style="font-size:10px;">${d.label}</span></div>
+          <div class="stars">★★★★${d.rating>=5?'★':'☆'} ${d.rating}</div>
+          <div style="font-size:11px;color:var(--muted);">📍 ${d.city}</div>
+        </div>
+      </div>
+      <div class="service-photos-section">
+        <div class="service-photos-title">Vehicle &amp; Service Photos</div>
+        <div class="photo-gallery">
+          ${d.photos.map((p,i)=>`<div class="photo-thumb"><span style="font-size:26px;">${p}</span><div class="photo-label">${d.photoLabels[i]}</div></div>`).join('')}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin:8px 0;line-height:1.5;">${d.services}</div>
+      <div class="driver-stats">
+        <div class="driver-stat"><div class="driver-stat-val">${d.trips}</div><div class="driver-stat-lbl">Trips</div></div>
+        <div class="driver-stat"><div class="driver-stat-val">${(d.km/1000).toFixed(0)}K</div><div class="driver-stat-lbl">KM</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-primary btn-sm" style="flex:1;" onclick="showToast('📩 Request sent to ${d.name}!','📩')">Hire</button>
+        <button class="btn btn-negotiate btn-sm" onclick="openModal('negotiate')">💬 Negotiate</button>
+        <button class="btn btn-secondary btn-sm" onclick="showToast('📞 Calling ${d.name}...','📞')">📞</button>
+      </div>
+    </div>`).join('');
+}
+function filterDriverType(type,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDrivers(type==='all'?driversData:driversData.filter(d=>d.type===type));
+}
+
+// ═══════════ DRIVER PHOTO GALLERY ═══════════
+function renderDriverPhotos(){
+  const el=document.getElementById('driver-photo-gallery');
+  if(!el)return;
+  el.innerHTML = driverPhotos.map((p,i)=>`
+    <div class="photo-thumb" onclick="removePhoto(${i})">
+      <span style="font-size:28px;">${p.emoji}</span>
+      <div class="photo-label">${p.label}</div>
+    </div>`).join('') +
+    `<div class="photo-upload-btn" onclick="document.getElementById('photo-upload-input').click()">
+      <span>📷</span><span>Add Photo</span>
+    </div>`;
+}
+function removePhoto(idx){
+  driverPhotos.splice(idx,1);
+  renderDriverPhotos();
+  showToast('🗑️ Photo removed','🗑️');
+}
+function handlePhotoUpload(e){
+  const files=Array.from(e.target.files);
+  const emojis=['🖼️','📸','🚛','📦','🛣️','🏗️'];
+  files.forEach((f,i)=>{
+    driverPhotos.push({emoji:emojis[i%emojis.length],label:f.name.replace(/\.[^.]+$/,'').substring(0,18)});
+  });
+  renderDriverPhotos();
+  showToast(`📷 ${files.length} photo${files.length>1?'s':''} added!`,'📷');
+}
+
+// ═══════════ FARE CALCULATOR ═══════════
+const vc={
+  truck:    {ft:'Diesel',ppl:DIESEL,rate:30,base:80,dR:.30,wR:10,tollKey:'truck'},
+  medtruck: {ft:'Diesel',ppl:DIESEL,rate:18,base:60,dR:.20,wR:8, tollKey:'truck'},
+  car:      {ft:'Petrol',ppl:PETROL,rate:10,base:35,dR:.15,wR:5, tollKey:'light'},
+  sedan:    {ft:'Petrol',ppl:PETROL,rate:7, base:20,dR:.12,wR:3, tollKey:'light'},
+  passenger:{ft:'Diesel',ppl:DIESEL,rate:12,base:15,dR:.10,wR:4, tollKey:'kombi'},
+};
+function routeSelected(){
+  const r=document.getElementById('fare-route').value;
+  if(r==='custom')return;
+  const rd=routeTolls[r];
+  if(!rd)return;
+  document.getElementById('fare-distance').value=rd.km;
+  const type=document.getElementById('fare-type').value;
+  const tollKey=vc[type]?.tollKey||'truck';
+  document.getElementById('toll-count').value=rd.tolls;
+  calcFare();
+}
+function calcFare(){
+  const type=document.getElementById('fare-type').value;
+  const dist=parseFloat(document.getElementById('fare-distance').value)||0;
+  const wgt=parseFloat(document.getElementById('fare-weight').value)||0;
+  const tollCount=parseInt(document.getElementById('toll-count').value)||0;
+  const v=vc[type];
+  document.getElementById('weight-label').textContent=type==='sedan'||type==='passenger'?'Passengers':'Cargo (tonnes)';
+  const litres=dist*v.rate/100;
+  const fuelCost=litres*v.ppl;
+  const tollFee=tollCount*(type==='truck'||type==='medtruck'?3:type==='passenger'?2:3);
+  const dC=Math.round(dist*v.dR);
+  const wC=Math.round(wgt*v.wR);
+  const total=v.base+dC+wC+tollFee;
+  document.getElementById('fare-total').textContent=total;
+  document.getElementById('fare-base').textContent='$'+v.base;
+  document.getElementById('fare-dist-cost').textContent='$'+dC;
+  document.getElementById('fare-weight-cost').textContent='$'+wC;
+  document.getElementById('fare-fuel-cost').textContent='$'+Math.round(fuelCost);
+  document.getElementById('fare-toll-cost').textContent='$'+tollFee;
+  document.getElementById('fare-per-km').textContent=dist>0?'$'+(total/dist).toFixed(2)+'/km':'—';
+  document.getElementById('toll-gates-count').textContent=tollCount+' gate'+(tollCount!==1?'s':'');
+  const tpg=type==='passenger'?2:3;
+  document.getElementById('toll-per-gate').textContent='$'+tpg+'.00';
+  document.getElementById('toll-total-display').textContent='$'+tollFee.toFixed(2);
+}
+
+// ═══════════ NEGOTIATE ═══════════
+function sendCounter(){
+  const amt=document.getElementById('my-offer').value;
+  const reason=document.getElementById('offer-reason').value||'';
+  if(!amt){showToast('⚠ Enter an amount first','⚠');return;}
+  const list=document.getElementById('counter-list');
+  const who=currentRole==='driver'?'🚛 You (Driver)':'👤 You (Client)';
+  list.innerHTML+=`<div class="counter-item"><span style="font-size:18px;">${currentRole==='driver'?'🚛':'👤'}</span><div><div class="counter-from">${who}</div><div class="counter-amount mine">$${amt}</div>${reason?`<div style="font-size:11px;color:var(--muted);">${reason}</div>`:''}</div><div class="counter-actions"><span style="font-size:11px;color:var(--muted);">Sent</span></div></div>`;
+  document.getElementById('my-offer').value='';
+  document.getElementById('offer-reason').value='';
+  showToast('💬 Counter-offer sent! Waiting for response.','💬');
+  setTimeout(()=>{
+    list.innerHTML+=`<div class="counter-item" style="border-color:rgba(200,245,58,.2);"><span style="font-size:18px;">${currentRole==='driver'?'👤':'🚛'}</span><div><div class="counter-from">Other party</div><div class="counter-amount theirs">$${Math.round(parseFloat(amt)*0.95)}</div><div style="font-size:11px;color:var(--muted);">Let's meet halfway</div></div><div class="counter-actions"><button class="btn btn-primary btn-sm" onclick="acceptOffer()">✓ Accept</button></div></div>`;
+  },2000);
+}
+function acceptOffer(){
+  closeModal('negotiate');
+  showToast('✅ Deal accepted! Trip is confirmed.','✅');
+}
+
+// ═══════════ AVAILABILITY ═══════════
+function toggleAvailability(){
+  isOnline=!isOnline;
+  const btn=document.getElementById('avail-btn');
+  if(isOnline){btn.textContent='● Online';btn.className='btn btn-primary btn-sm';}
+  else{btn.textContent='○ Offline';btn.className='btn btn-secondary btn-sm';}
+  showToast(isOnline?'✅ You are now online and visible to clients':'⭕ You are now offline','');
+}
+
+// ═══════════ MODALS ═══════════
+function openModal(id){document.getElementById('modal-'+id).classList.add('open');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+function selectMode(el,cls){el.closest('.mode-cards').querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected','truck-mode','car-mode','pax-mode'));el.classList.add('selected',cls);}
+function selectPayment(el){document.querySelectorAll('.payment-card').forEach(c=>{c.classList.remove('selected');c.querySelector('.payment-check').style.opacity='0';});el.classList.add('selected');el.querySelector('.payment-check').style.opacity='1';}
+
+// ═══════════ TOAST ═══════════
+function showToast(msg,icon='✓'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast-icon').textContent=icon||'✓';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════ ACTIONS ═══════════
+function submitLoad(){closeModal('postLoad');showToast('📦 Load posted! Toll fees auto-calculated.','📦');}
+function submitRide(){closeModal('bookRide');showToast('🚗 Ride booked! Finding your driver...','🚗');}
+function submitDriver(){closeModal('registerDriver');showToast('🚛 Application submitted!','🚛');}
+function trackTrip(){const id=document.getElementById('trip-id-input').value.trim();id?showToast('📍 Tracking '+id+'...','📍'):showToast('Please enter a Trip ID','⚠');}
+
+// ═══════════ INIT ═══════════
+document.querySelectorAll('input[type=date]').forEach(i=>i.valueAsDate=new Date());
+</script>
+</body>
+</html>
